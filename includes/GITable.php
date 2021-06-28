@@ -1,8 +1,4 @@
 <?php
-/*
-Plugin Name: Test List Table Example
-*/
-
 if( ! class_exists( 'WP_List_Table' ) ) {
     require_once( ABSPATH . 'wp-admin/includes/class-wp-list-table.php' );
 }
@@ -19,7 +15,7 @@ class Tokens_Table extends WP_List_Table {
             'ajax'      => false        
         ));
 
-      add_action( 'admin_head', array( &$this, 'admin_header' ) );            
+        add_action( 'admin_head', array( &$this, 'admin_header' ) );            
     }
 
     function admin_header() {
@@ -38,7 +34,7 @@ class Tokens_Table extends WP_List_Table {
           case 'token':
               return $item[ $column_name ];
           default:
-              return print_r( $item, true ) ; //Show the whole array for troubleshooting purposes
+              return print_r( $item, true ) ;
       }
     }
 
@@ -62,13 +58,12 @@ class Tokens_Table extends WP_List_Table {
     }
 
     function usort_reorder( $a, $b ) {
-        // If no sort, default to title
         $orderby = ( ! empty( $_GET['orderby'] ) ) ? sanitize_key($_GET['orderby']) : 'ccard';
-        // If no order, default to asc
+
         $order = ( ! empty($_GET['order'] ) ) ? sanitize_key($_GET['order']) : 'asc';
-        // Determine sort order
+
         $result = strcmp( $a[$orderby], $b[$orderby] );
-        // Send final sort direction to usort
+
         return ( $order === 'asc' ) ? $result : -$result;
     }
 

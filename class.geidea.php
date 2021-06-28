@@ -10,23 +10,21 @@ if (!defined('ABSPATH')) {
  *
  * @class       WC_Geidea
  * @extends     WC_Payment_Gateway
- * @version     1.0.0
- * @author      Avalab
+ * @version     1.0.4
+ * @author      Geidea
  */ 
 
 class WC_Gateway_Geidea extends WC_Payment_Gateway {
   
   public function __construct() {
     $this->id = 'geidea';
-    
-    $lang = 'en';
 
-    include_once 'geidea/lang/settings.'.$lang.'.php';
+    include_once 'lang/settings.en.php';
     
-    require_once 'geidea/includes/GIFunctions.php';
-    require_once 'geidea/includes/GITable.php';
+    require_once 'includes/GIFunctions.php';
+    require_once 'includes/GITable.php';
 
-    require_once 'geidea/includes/GIHtml.php';
+    require_once 'includes/GIHtml.php';
     $this->html = new \Geidea\Includes\GIHtml();
     $this->functions = new \Geidea\Includes\GIFunctions();
 
@@ -42,11 +40,11 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway {
     $this->init_settings();
 
     $this->supports = array(
-      'products',
-      'refunds',
-      'pre-orders',
-      'tokenization',
-  );
+        'products',
+        'refunds',
+        'pre-orders',
+        'tokenization'
+    );
 
     //Hel: Get setting values
     $this->title = $this->get_option('title');
@@ -56,12 +54,12 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway {
     $this->logo = $this->get_option('logo');
     $this->icon = apply_filters('woocommerce_' . $this->id . '_icon', (!empty($this->logo) 
         ? $this->logo
-        : plugins_url( 'geidea/imgs/geidea-logo.svg' , __FILE__ )));
+        : plugins_url( 'assets/imgs/geidea-logo.svg' , __FILE__ )));
 
     $this->tokenise_param = "wc-{$this->id}-new-payment-method";
     $this->token_id_param = "wc-{$this->id}-payment-token";
 
-    $this->config = require 'geidea/config.php';
+    $this->config = require 'config.php';
 
     //The connections hooks
     if (version_compare(WOOCOMMERCE_VERSION, '2.0.0', '>=')) {
@@ -78,67 +76,84 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway {
     }
   }
 
+    public function process_admin_options() {
+        $this->init_settings();
+
+        $post_data = $this->get_post_data();
+
+        foreach ( $this->get_form_fields() as $key => $field ) {
+            if ( 'title' !== $this->get_field_type( $field ) && $key !== 'logo' ) {
+                try {
+                    $this->settings[ $key ] = $this->get_field_value( $key, $field, $post_data );
+                } catch ( Exception $e ) {
+                    $this->add_error( $e->getMessage() );
+                }
+            }
+        }
+
+        if (isset($_FILES['woocommerce_geidea_logo']) && ($_FILES['woocommerce_geidea_logo']['size'] > 0)) {
+            $arr_file_type = wp_check_filetype(basename($_FILES['woocommerce_geidea_logo']['name']));
+            $uploaded_file_type = $arr_file_type['type'];
+        
+            $allowed_file_types = array('image/jpg','image/jpeg','image/png','image/svg+xml');
+        
+            if (in_array($uploaded_file_type, $allowed_file_types)) {
+
+                if (!function_exists('wp_handle_upload')) {
+                    require_once( ABSPATH . 'wp-admin/includes/file.php' );
+                }
+                
+                $uploaded_file = wp_handle_upload($_FILES['woocommerce_geidea_logo'], array( 'test_form' => false ));
+        
+                if (isset($uploaded_file['file'])) {
+
+                    $this->settings['logo'] = $uploaded_file['url'];        
+                } else {
+                    $this->errors[] = "Something went wrong while uploading file!";
+                }
+        
+            } else {
+                $this->errors[] = "Wrong file type!";
+            }
+        }
+
+        $san_merchant_gateway_key = sanitize_text_field($this->settings['merchant_gateway_key']);
+        $san_merchant_password = sanitize_text_field($this->settings['merchant_password']);
+        if(empty($san_merchant_gateway_key)){
+            $this->errors[] = sprintf(geideaErrorRequired, "Merchant gateway key");
+        }
+        if(empty($san_merchant_password)){
+            $this->errors[] = sprintf(geideaErrorRequired, "Merchant password");
+        } 
+        if(!empty($this->errors)){
+            $this->enabled = false;
+            $this->settings['enabled'] = 'no';
+
+            foreach ($this->errors as $v) {
+                WC_Admin_Settings::add_error($v);
+            }
+        } 
+        $this->settings['return_url'] = 'yes';
+
+        return update_option( $this->get_option_key(), apply_filters( 'woocommerce_settings_api_sanitized_fields_' . $this->id, $this->settings ), 'yes' );
+    }
 
   /**
    * Output form of setting payment system.
    */
   public function init_form_fields() {   
-      $save_action = ( isset($_POST['save']) )  ? sanitize_key( $_POST['save'] ) : false;
-      //Save custom fields
-      if ($save_action) {
-          //Save new logo
-          if (!empty($_FILES) && $_FILES['woocommerce_geidea_logo']['error'] == 0 && is_uploaded_file($_FILES['woocommerce_geidea_logo']['tmp_name']) == true 
-              && strpos($_FILES['woocommerce_geidea_logo']['type'], 'image') !== false) {
-              $str = explode('.', $_FILES['woocommerce_geidea_logo']['name']);
-              $type_file = $str[count($str) - 1];
-              $uploadfile = str_replace('\\', '/', __DIR__) . '/geidea/imgs/custom_logo/logo.' . $type_file;
-              $files = array_diff(scandir(str_replace('\\', '/', __DIR__) . '/geidea/imgs/custom_logo/'), array('..', '.'));
-              foreach ($files as $value) {
-                  if (strpos($value, 'logo') !== false) {
-                      unlink(str_replace('\\', '/', __DIR__) . '/geidea/imgs/custom_logo/' . $value);
-                  }
-              }
-              if (move_uploaded_file($_FILES['woocommerce_geidea_logo']['tmp_name'], $uploadfile) == true) {
-                  unset($_FILES);
-              }
-          }
-      }
-
-      //Getting the path of logo
-      $icon = plugins_url( 'geidea/imgs/geidea-logo.svg' , __FILE__ );
-      $files = array_diff(scandir(str_replace('\\', '/', __DIR__) . '/geidea/imgs/custom_logo/'), array('..', '.'));
-      foreach ($files as $value) {
-          if (strpos($value, 'logo.') !== false) {
-              $icon = plugins_url( 'geidea/imgs/custom_logo/'.$value , __FILE__ );
-              break;
-          }
-      }
-      
+     
       //Get order status
       $statuses = wc_get_order_statuses();
       
       $options = get_option('woocommerce_' . $this->id . '_settings');
 
-      $san_merchant_gateway_key = sanitize_text_field($options['merchant_gateway_key']);
-      $san_merchant_password = sanitize_text_field($options['merchant_password']);
-      if(empty($san_merchant_gateway_key)){
-          $this->errors[] = sprintf(geideaErrorRequired, "Merchant gateway key");
-      }
-      if(empty($san_merchant_password)){
-          $this->errors[] = sprintf(geideaErrorRequired, "Merchant password");
-      }
+      $merchantLogo = sanitize_text_field($options['logo']);
 
-      if(!empty($this->errors)){
-          $this->enabled = false;
-          $options['enabled'] = 'no';
+      if (empty($merchantLogo)) {
+          $merchantLogo = plugins_url( 'assets/imgs/geidea-logo.svg' , __FILE__ );
       }
-
-      $options['return_url'] = 'yes';
-      update_option('woocommerce_' . $this->id . '_settings', $options);
-      
-      $v = ( isset($_POST['woocommerce_geidea_logo']) )  ? sanitize_key( $_POST['woocommerce_geidea_logo'] ) : "";
-
-      //The creation a array the payments settings in admin panel.
+          
       $this->form_fields = array(
         'enabled' => array(
           'title' => geideaSettingsActive,
@@ -182,8 +197,8 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway {
         'logo' => array(
           'title' => geideaSettingsLogo,
           'type' => 'file',
-          'description' => '<img src="' . $icon . '?v='.$v.'" width="70">',
-          'default' => plugins_url('geidea/imgs/geidea-logo.svg',__FILE__ )
+          'description' => '<img src="' . esc_html($merchantLogo) . '" width="70">',
+          'default' => plugins_url('assets/imgs/geidea-logo.svg',__FILE__ )
         ),
         'header_color' => array(
           'title' => geideaSettingsHeaderColor,
@@ -273,9 +288,6 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway {
           }
       }
 
-      if(!empty($this->errors)){
-          echo $this->html->get_error_message($this->errors);
-      }
       ?>
       <h3><?php echo geideaTitle?></h3>
       <table class="form-table">
@@ -318,10 +330,10 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway {
 
   
   function receipt_page($order_id) {
-      wp_register_style('geidea', plugins_url('geidea/css/gi-styles.css',__FILE__ ));
+      wp_register_style('geidea', plugins_url('assets/css/gi-styles.css',__FILE__ ));
       wp_enqueue_style('geidea');
 
-      wp_register_script( 'geidea', plugins_url('geidea/js/script.js',__FILE__ ));
+      wp_register_script( 'geidea', plugins_url('assets/js/script.js',__FILE__ ));
       wp_enqueue_script('geidea');
       wp_register_script( 'geidea_sdk', $this->config['jsSdkUrl']);
       wp_enqueue_script('geidea_sdk');
@@ -355,19 +367,9 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway {
       $result_fields['customerEmail'] = sanitize_text_field($order->get_billing_email());
       $result_fields['billingAddress'] = json_encode($this->get_formatted_billing_address($order));
       $result_fields['shippingAddress'] = json_encode($this->get_formatted_shipping_address($order));
+      $result_fields['merchantLogoUrl'] = $this->get_option('logo');
 
-      //Getting the path of logo
-      $icon = '';
-      $files = array_diff(scandir(str_replace('\\', '/', __DIR__) . '/geidea/imgs/custom_logo/'), array('..', '.'));
-      foreach ($files as $value) {
-          if (strpos($value, 'logo.') !== false) {
-            $icon = plugins_url( 'geidea/imgs/custom_logo/'.$value );
-            break;
-          }
-      }
-      $result_fields['merchantLogoUrl'] = $icon;
-
-      echo $this->html->create_form($result_fields);
+      $this->html->create_form($result_fields);
       
       $text = sprintf(geideaOrderResultCreated, $order->id, $settings['orderStatusWaiting']);
       $order->add_order_note($text);
@@ -515,7 +517,7 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway {
         try {
             $wc_order = new \WC_Order($order["merchantReferenceId"]);
         } catch (Exception $e) {
-            echo "Order with id " . $order["merchantReferenceId"] . " not found!";
+            echo esc_html("Order with id " . $order["merchantReferenceId"] . " not found!");
             http_response_code(404);
             die();
         }
