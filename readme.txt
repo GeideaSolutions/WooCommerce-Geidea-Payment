@@ -1,11 +1,11 @@
 === Geidea Online Payments for WooCommerce ===
 Contributors: geideapg123
-Version: 1.0.5
+Version: 1.0.6
 Tags: credit card, geidea, apple pay, payment, payment for wordpress, payment for woocommerce, payment request, woocommerce
 Requires at least: 5.0
-Tested up to: 5.7.2
+Tested up to: 5.8
 Requires PHP: 5.6
-Stable tag: 1.0.5
+Stable tag: 1.0.6
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -80,4 +80,8 @@ Before running any update make sure to backup your website!
 
 = 1.0.5 - 2021-07-02 =
 * Add - Added order note and change status for failed payments.
+
+= 1.0.6 - 2021-07-19 =
+* Fix - Fixed casting order amount for tokenise payment.
+* Fix - Fixed change order waiting status after placing the order.
 

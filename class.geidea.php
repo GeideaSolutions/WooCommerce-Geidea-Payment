@@ -10,7 +10,7 @@ if (!defined('ABSPATH')) {
  *
  * @class       WC_Geidea
  * @extends     WC_Payment_Gateway
- * @version     1.0.5
+ * @version     1.0.6
  * @author      Geidea
  */ 
 
@@ -370,9 +370,9 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway {
 
         $this->html->create_form($result_fields);
         
-        $text = sprintf(geideaOrderResultCreated, $order->id, $settings['orderStatusWaiting']);
+        $text = sprintf(geideaOrderResultCreated, $order->id, $this->get_option('order_status_waiting'));
         $order->add_order_note($text);
-        $status = str_replace('wc-', '', $settings['orderStatusWaiting']);
+        $status = str_replace('wc-', '', $this->get_option('order_status_waiting'));
         //change status order
         $order->update_status($status, $text);
     }
@@ -423,16 +423,13 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway {
         $result_currency = in_array($order_currency, $available_currencies) ? $order_currency : $this->get_option('currency_id');
         $values["currency"] = $result_currency;
 
-        $values["amount"] = (float)number_format($order->order_total, 2, '.', '');
+        $values["amount"] = number_format($order->order_total, 2, '.', '');
 
         $values["tokenId"] = $token->get_token();
         
         $values["initiatedBy"] = "Internet";
         $values["merchantReferenceId"] = (string)$order->id;
         $values["callbackUrl"] = get_site_url().'/?wc-api=geidea';
-
-        $values['billingAddress'] = $this->get_formatted_billing_address($order);
-        $values['shippingAddress'] = $this->get_formatted_shipping_address($order);
 
         $merchantKey = $this->get_option('merchant_gateway_key');
         $password = $this->get_option('merchant_password');

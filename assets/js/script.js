@@ -29,7 +29,7 @@ function startGIPayment(merchantGatewayKey, orderId, amount, currencyId, callbac
 
         api.configurePayment({
             callbackUrl: callbackUrl,
-            amount: amount,
+            amount: parseFloat(amount),
             currency: currencyId,
             merchantReferenceId: orderId,
             cardOnFile: Boolean(cardOnFile),
