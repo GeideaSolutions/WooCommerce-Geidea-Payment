@@ -3,7 +3,7 @@
 /*
   Plugin Name: Geidea Online Payments
   Description: Geidea Online Payments.
-  Version: 1.0.6
+  Version: 1.0.7
   Author: Geidea 
   Author URI: https://geidea.net
 
@@ -27,8 +27,6 @@
 if (!defined('ABSPATH')) {
   exit; // Exit if accessed directly
 }
-
-remove_action( 'shutdown', 'wp_ob_end_flush_all', 1 );
 
 define('GEIDEA_DIR', plugin_dir_path(__FILE__));
 
@@ -62,7 +60,6 @@ function woocommerce_geidea() {
   }
 
   add_filter('woocommerce_payment_gateways', 'GeideaAddGateway');
-  
 }
 
 ?>

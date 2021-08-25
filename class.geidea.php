@@ -10,7 +10,7 @@ if (!defined('ABSPATH')) {
  *
  * @class       WC_Geidea
  * @extends     WC_Payment_Gateway
- * @version     1.0.6
+ * @version     1.0.7
  * @author      Geidea
  */ 
 
