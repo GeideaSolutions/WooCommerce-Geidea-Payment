@@ -77,6 +77,10 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway {
     }
 
     public function process_admin_options() {
+		function generate_logo_filename($dir, $name, $ext){
+			return "logo_".bin2hex(random_bytes(16)).$ext;
+		}
+
         $this->init_settings();
 
         $post_data = $this->get_post_data();
@@ -103,7 +107,7 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway {
                     require_once( ABSPATH . 'wp-admin/includes/file.php' );
                 }
                 
-                $uploaded_file = wp_handle_upload($_FILES['woocommerce_geidea_logo'], array( 'test_form' => false ));
+                $uploaded_file = wp_handle_upload($_FILES['woocommerce_geidea_logo'], array( 'test_form' => false, 'unique_filename_callback' => 'generate_logo_filename' ));
         
                 if (isset($uploaded_file['file'])) {
                     $this->settings['logo'] = $uploaded_file['url'];        
