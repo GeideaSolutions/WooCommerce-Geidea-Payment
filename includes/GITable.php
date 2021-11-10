@@ -146,7 +146,7 @@ class Tokens_Table extends WP_List_Table {
 
         $this->items = $page_data;
     }
-} //class
+}
 
 function render_tokens_table(){
     global $tokensTable;
@@ -156,3 +156,4 @@ function render_tokens_table(){
     $tokensTable->display(); 
     echo '</div>'; 
 }
+?>

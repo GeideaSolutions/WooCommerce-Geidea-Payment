@@ -1,4 +1,4 @@
-<?
+<?php
 namespace Geidea\Includes;
 class GIFunctions  {
 
@@ -21,6 +21,4 @@ class GIFunctions  {
         return json_decode($result["body"], true);
     }
 }
-
-
 ?>

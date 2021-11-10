@@ -10,7 +10,7 @@ if (!defined('ABSPATH')) {
  *
  * @class       WC_Geidea
  * @extends     WC_Payment_Gateway
- * @version     1.0.8
+ * @version     1.0.9
  * @author      Geidea
  */ 
 
@@ -41,8 +41,6 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway {
 
         $this->supports = array(
             'products',
-            'refunds',
-            'pre-orders',
             'tokenization'
         );
 
@@ -141,98 +139,98 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway {
         return update_option( $this->get_option_key(), apply_filters( 'woocommerce_settings_api_sanitized_fields_' . $this->id, $this->settings ), 'yes' );
     }
 
-  /**
-   * Output form of setting payment system.
-   */
-  public function init_form_fields() {   
-     
-      //Get order status
-      $statuses = wc_get_order_statuses();
-      
-      $options = get_option('woocommerce_' . $this->id . '_settings');
+    /**
+     * Output form of setting payment system.
+     */
+    public function init_form_fields() {   
+        //Get order status
+        $statuses = wc_get_order_statuses();
+        
+        $options = get_option('woocommerce_' . $this->id . '_settings');
 
-      $merchantLogo = sanitize_text_field($options['logo']);
+        $logo = $options['logo'];
+        $merchantLogo = sanitize_text_field($logo);
 
-      if (empty($merchantLogo)) {
-          $merchantLogo = plugins_url( 'assets/imgs/geidea-logo.svg' , __FILE__ );
-      }
-          
-      $this->form_fields = array(
-        'enabled' => array(
-          'title' => geideaSettingsActive,
-          'type' => 'checkbox',
-          'label' => ' ',
-          'default' => 'no'
-        ),
-        'title' => array(
-          'title' => geideaSettingsName,
-          'type' => 'text',
-          'default' => geideaTitle
-        ),
-        'description' => array(
-          'title' => geideaSettingsDesc,
-          'type' => 'textarea',
-          'description' => '',
-          'default' => geideaTitleDesc
-        ),
-        'merchant_gateway_key' => array(
-          'title' => geideaSettingsMerchant.' *',
-          'type' => 'text',
-          'description' => geideaSettingsMerchantDesc,
-          'default' => ''
-        ),
-        'merchant_password' => array(
-          'title' => geideaSettingsPassword.' *',
-          'type' => 'text',
-          'description' => '',
-          'default' => ''
-        ),
-        'currency_id' => array(
-          'title' => geideaSettingsCurrency.' *',
-          'type' => 'select',
-          'options' => [
-              'USD' => "US Dollar",
-              'SAR' => "Saudi Riyal",
-              'EGP' => "Egyptian Pound"
-          ],
-          'default' => 'SAR'
-        ),
-        'logo' => array(
-          'title' => geideaSettingsLogo,
-          'type' => 'file',
-          'description' => '<img src="' . esc_html($merchantLogo) . '" width="70">',
-          'default' => plugins_url('assets/imgs/geidea-logo.svg',__FILE__ )
-        ),
-        'header_color' => array(
-          'title' => geideaSettingsHeaderColor,
-          'type' => 'text',
-          'description' => geideaSettingsHeaderColorDesc,
-          'default' => ''
-        ),
-        'order_status_sucess' => array(
-          'title' => geideaSettingsOrderStatusSuccess,
-          'type' => 'select',
-          'options' => $statuses,
-          'default' => 'wc-processing'
-        ),
-        'order_status_waiting' => array(
-          'title' => geideaSettingsOrderStatusWaiting,
-          'type' => 'select',
-          'options' => $statuses,
-          'default' => 'wc-pending' 
-        )
-      );
-  }
-  
+        if (empty($merchantLogo)) {
+            $merchantLogo = plugins_url( 'assets/imgs/geidea-logo.svg' , __FILE__ );
+        }
+            
+        $this->form_fields = array(
+            'enabled' => array(
+                'title' => geideaSettingsActive,
+                'type' => 'checkbox',
+                'label' => ' ',
+                'default' => 'no'
+            ),
+            'title' => array(
+                'title' => geideaSettingsName,
+                'type' => 'text',
+                'default' => geideaTitle
+            ),
+            'description' => array(
+                'title' => geideaSettingsDesc,
+                'type' => 'textarea',
+                'description' => '',
+                'default' => geideaTitleDesc
+            ),
+            'merchant_gateway_key' => array(
+                'title' => geideaSettingsMerchant.' *',
+                'type' => 'text',
+                'description' => geideaSettingsMerchantDesc,
+                'default' => ''
+            ),
+            'merchant_password' => array(
+                'title' => geideaSettingsPassword.' *',
+                'type' => 'text',
+                'description' => '',
+                'default' => ''
+            ),
+            'currency_id' => array(
+                'title' => geideaSettingsCurrency.' *',
+                'type' => 'select',
+                'options' => [
+                    'USD' => "US Dollar",
+                    'SAR' => "Saudi Riyal",
+                    'EGP' => "Egyptian Pound"
+                ],
+                'default' => 'SAR'
+            ),
+            'logo' => array(
+                'title' => geideaSettingsLogo,
+                'type' => 'file',
+                'description' => '<img src="' . esc_html($merchantLogo) . '" width="70">',
+                'default' => plugins_url('assets/imgs/geidea-logo.svg',__FILE__ )
+            ),
+            'header_color' => array(
+                'title' => geideaSettingsHeaderColor,
+                'type' => 'text',
+                'description' => geideaSettingsHeaderColorDesc,
+                'default' => ''
+            ),
+            'order_status_sucess' => array(
+                'title' => geideaSettingsOrderStatusSuccess,
+                'type' => 'select',
+                'options' => $statuses,
+                'default' => 'wc-processing'
+            ),
+            'order_status_waiting' => array(
+                'title' => geideaSettingsOrderStatusWaiting,
+                'type' => 'select',
+                'options' => $statuses,
+                'default' => 'wc-pending' 
+            )
+        );
+    }
+    
 
-  function payment_fields()
-  {
-      if ($this->description) echo wpautop(wptexturize($this->description));
+    function payment_fields()
+    {
+        if ($this->description) echo wpautop(wptexturize($this->description));
 
-      $this->tokenization_script();
-      $this->saved_payment_methods();
-      $this->save_payment_method_checkbox();
-  }
+        $this->tokenization_script();
+        $this->saved_payment_methods();
+        $this->save_payment_method_checkbox();
+    }
 
 
   /**
