@@ -299,7 +299,7 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway {
         $this->generate_settings_html($form_fields, true);
         ?>
         </table>
-        <?
+        <?php
         render_tokens_table();
     }
 
