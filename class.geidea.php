@@ -10,7 +10,7 @@ if (!defined('ABSPATH')) {
  *
  * @class       WC_Geidea
  * @extends     WC_Payment_Gateway
- * @version     1.0.9
+ * @version     1.0.10
  * @author      Geidea
  */ 
 
@@ -565,7 +565,7 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway {
                 die();
             }
 
-
+            $options = $this->get_options();
             if(mb_strtolower($order["status"]) == "success" &&
                 mb_strtolower($order["detailedStatus"]) == "paid"){
                     //save token block
@@ -586,7 +586,8 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway {
                     echo "Order is completed!";
                     http_response_code(200);
                     die();
-            } elseif (mb_strtolower($order["status"]) == "failed"){
+            } elseif (mb_strtolower($order["status"]) == "failed" && 
+                        $wc_order->post_status != $options["orderStatusSuccess"]){
                 $last_transaction = end($order['transactions']);
                 $codes = $last_transaction['codes'];
                 
@@ -599,11 +600,14 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway {
                 );
                 $wc_order->add_order_note($text);
 
-                $options = $this->get_options();
                 $wc_order->update_status(apply_filters('woocommerce_payment_complete_order_status', 'failed', $wc_order->id));
 
                 echo "Payment failed!";
                 http_response_code(400);
+                die();
+            } else {
+                echo "Not found!";
+                http_response_code(404);
                 die();
             }
         } catch(Exception $return_handler_exc) {
