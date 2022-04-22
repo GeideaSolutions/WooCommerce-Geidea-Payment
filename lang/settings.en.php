@@ -23,6 +23,7 @@ define('geideaSettingsOrderStatusWaiting', 'Order status while waiting for payme
 define('geideaSettingsLogo', 'Logo');
 define('geideaSettingsHeaderColor', 'Header Color');
 define('geideaSettingsHeaderColorDesc', 'Optional. This color will be used by Geidea to adjust design of the widget. Use <a href="https://htmlcolorcodes.com/color-picker">Color Picker</a> to choose desired color.');
+define('geideaSettingsPartnerId', 'Partner Id');
 
 define('geideaOrderResultCreated', 'Expected payment of order. Order number: %s. Status order: %s.');
 

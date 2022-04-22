@@ -1,11 +1,11 @@
 === Geidea Online Payments for WooCommerce ===
 Contributors: geideapg123
-Version: 1.0.10
+Version: 1.0.11
 Tags: credit card, geidea, apple pay, payment, payment for wordpress, payment for woocommerce, payment request, woocommerce
 Requires at least: 5.0
 Tested up to: 5.9
 Requires PHP: 7.2
-Stable tag: 1.0.10
+Stable tag: 1.0.11
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -96,3 +96,6 @@ Before running any update make sure to backup your website!
 
 = 1.0.10 - 2022-03-08 =
 * Fix - Fixed order status update.
+
+= 1.0.11 - 2022-04-18 =
+* Enhancement - Added additional information fields to order page.

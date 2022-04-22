@@ -3,6 +3,8 @@ if (!defined('ABSPATH')) {
   exit; // Exit if accessed directly
 }
 
+require ABSPATH . 'wp-includes/version.php';
+
 /**
  * Geidea Payment Gateway class
  *
@@ -10,7 +12,7 @@ if (!defined('ABSPATH')) {
  *
  * @class       WC_Geidea
  * @extends     WC_Payment_Gateway
- * @version     1.0.10
+ * @version     1.0.11
  * @author      Geidea
  */ 
 
@@ -207,6 +209,12 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway {
                 'description' => geideaSettingsHeaderColorDesc,
                 'default' => ''
             ),
+            'partner_id' => array(
+                'title' => geideaSettingsPartnerId,
+                'type' => 'text',
+                'description' => '',
+                'default' => ''
+            ),
             'order_status_sucess' => array(
                 'title' => geideaSettingsOrderStatusSuccess,
                 'type' => 'select',
@@ -355,6 +363,8 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway {
 
         $result_currency = in_array($order_currency, $available_currencies) ? $order_currency : $this->get_option('currency_id');
 
+        global $wp_version;
+
         $result_fields = [];
         $result_fields['orderId'] = $order->id;
         $result_fields['amount'] = number_format($order->order_total, 2, '.', '');
@@ -369,6 +379,11 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway {
         $result_fields['billingAddress'] = json_encode($this->get_formatted_billing_address($order));
         $result_fields['shippingAddress'] = json_encode($this->get_formatted_shipping_address($order));
         $result_fields['merchantLogoUrl'] = $this->get_option('logo');
+        $result_fields['integrationType'] = 'plugin';
+        $result_fields['name'] = 'Wordpress';
+        $result_fields['version'] = $wp_version;
+        $result_fields['pluginVersion'] = GEIDEA_ONLINE_PAYMENTS_CURRENT_VERSION;
+        $result_fields['partnerId'] = $this->get_option('partner_id');
 
         $this->html->create_form($result_fields);
         
@@ -578,6 +593,9 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway {
 
                         $this->save_token($token_id, $card_number, $expiry_date, $card_type, $user_id);
                     }
+                    
+                    $wc_order->update_meta_data('Geidea Order Id', $order_id);
+                    $wc_order->update_meta_data('Merchant Reference Id', $merchant_reference_id);
 
                     $this->payment_complete($wc_order);
                     // Remove cart
@@ -599,11 +617,14 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway {
                     $codes["detailedResponseMessage"]
                 );
                 $wc_order->add_order_note($text);
+                $wc_order->update_meta_data('Geidea Order Id', $order_id);
+                $wc_order->update_meta_data('Merchant Reference Id', $merchant_reference_id);
+                $wc_order->update_meta_data('Detailed payment gate response message', $text);
 
                 $wc_order->update_status(apply_filters('woocommerce_payment_complete_order_status', 'failed', $wc_order->id));
 
                 echo "Payment failed!";
-                http_response_code(400);
+                http_response_code(200);
                 die();
             } else {
                 echo "Not found!";

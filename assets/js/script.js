@@ -6,7 +6,7 @@ function onDOMLoaded() {
 
 document.addEventListener("DOMContentLoaded", onDOMLoaded);
 
-function startGIPayment(merchantGatewayKey, orderId, amount, currencyId, callbackUrl, successUrl, cardOnFile, customerEmail, billingAddress, merchantLogoUrl, headerColor, billingAddressString, shippingAddressString) {
+function startGIPayment(merchantGatewayKey, orderId, amount, currencyId, callbackUrl, successUrl, cardOnFile, customerEmail, billingAddress, merchantLogoUrl, headerColor, billingAddressString, shippingAddressString, integrationType, name, version, pluginVersion, partnerId) {
     try {
         var onSuccess = function(_message, _statusCode) {
             setTimeout(document.location.href = successUrl, 1000);
@@ -38,7 +38,12 @@ function startGIPayment(merchantGatewayKey, orderId, amount, currencyId, callbac
             billingAddress: billingAddress,
             shippingAddress: shippingAddress,
             merchantLogoUrl: merchantLogoUrl,
-            styles: { "headerColor": headerColor }
+            styles: { "headerColor": headerColor },
+            integrationType: integrationType,
+            name: name,
+            version: version,
+            pluginVersion: pluginVersion,
+            partnerId: partnerId
         });
         api.startPayment();
     } catch (err) {
