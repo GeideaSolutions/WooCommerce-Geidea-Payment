@@ -5,7 +5,7 @@ define('geideaTitleDesc', 'Mada, VISA, MasterCard, Apple Pay');
 define('geideaDesc', 'Mada, VISA, MasterCard, Apple Pay');
 
 //Settings
-define('geideaSettingsActive', 'Activity');
+define('geideaSettingsActive', 'Active');
 define('geideaSettingsName', 'Name');
 define('geideaSettingsDesc', 'Description');
 

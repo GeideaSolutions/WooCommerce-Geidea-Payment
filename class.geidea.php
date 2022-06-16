@@ -12,7 +12,7 @@ require ABSPATH . 'wp-includes/version.php';
  *
  * @class       WC_Geidea
  * @extends     WC_Payment_Gateway
- * @version     1.0.11
+ * @version     1.0.12
  * @author      Geidea
  */ 
 
@@ -21,7 +21,12 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway {
     public function __construct() {
         $this->id = 'geidea';
 
-        include_once 'lang/settings.en.php';
+        $lang = get_bloginfo('language');
+        
+        if ($lang == "ar")
+            include_once 'lang/settings.ar.php';
+        else
+            include_once 'lang/settings.en.php';
         
         require_once 'includes/GIFunctions.php';
         require_once 'includes/GITable.php';
@@ -123,10 +128,10 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway {
         $san_merchant_gateway_key = sanitize_text_field($this->settings['merchant_gateway_key']);
         $san_merchant_password = sanitize_text_field($this->settings['merchant_password']);
         if(empty($san_merchant_gateway_key)){
-            $this->errors[] = sprintf(geideaErrorRequired, "Merchant gateway key");
+            $this->errors[] = sprintf(geideaErrorRequired, geideaSettingsMerchant);
         }
         if(empty($san_merchant_password)){
-            $this->errors[] = sprintf(geideaErrorRequired, "Merchant password");
+            $this->errors[] = sprintf(geideaErrorRequired, geideaSettingsPassword);
         } 
         if(!empty($this->errors)){
             $this->enabled = false;
@@ -364,6 +369,7 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway {
         $result_currency = in_array($order_currency, $available_currencies) ? $order_currency : $this->get_option('currency_id');
 
         global $wp_version;
+        $lang = get_bloginfo('language');
 
         $result_fields = [];
         $result_fields['orderId'] = $order->id;
@@ -379,6 +385,8 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway {
         $result_fields['billingAddress'] = json_encode($this->get_formatted_billing_address($order));
         $result_fields['shippingAddress'] = json_encode($this->get_formatted_shipping_address($order));
         $result_fields['merchantLogoUrl'] = $this->get_option('logo');
+        if ($lang == "ar")
+            $result_fields['language'] = $lang;
         $result_fields['integrationType'] = 'plugin';
         $result_fields['name'] = 'Wordpress';
         $result_fields['version'] = $wp_version;
