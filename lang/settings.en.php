@@ -24,7 +24,20 @@ define('geideaSettingsLogo', 'Logo');
 define('geideaSettingsHeaderColor', 'Header Color');
 define('geideaSettingsHeaderColorDesc', 'Optional. This color will be used by Geidea to adjust design of the widget. Use <a href="https://htmlcolorcodes.com/color-picker">Color Picker</a> to choose desired color.');
 define('geideaSettingsPartnerId', 'Partner Id');
+define('geideaSettingsReceiptEnabled', 'Receipt Enabled');
 
 define('geideaOrderResultCreated', 'Expected payment of order. Order number: %s. Status order: %s.');
 
 define('geideaErrorRequired', 'Field "%s" must not be empty.');
+
+// Card Tokens
+define('geideaTokensTitle', 'Card Tokens');
+
+define('geideaTokensCard', 'Card');
+define('geideaTokensUsername', 'Username');
+define('geideaTokensToken', 'Token');
+
+define('geideaTokensDelete', 'Delete');
+
+define('geideaTokensEndingIn', 'ending in');
+define('geideaTokensExpires', 'expires');

@@ -50,9 +50,9 @@ class Tokens_Table extends WP_List_Table {
     function get_columns(){
         $columns = array(
             'cb'        => '<input type="checkbox" />',
-            'ccard' => __( 'Card', 'tokens_table' ),
-            'username'    => __( 'Username', 'tokens_table' ),
-            'token'      => __( 'Token', 'tokens_table' )
+            'ccard' => geideaTokensCard,
+            'username'    => geideaTokensUsername,
+            'token'      => geideaTokensToken
         );
         return $columns;
     }
@@ -90,7 +90,7 @@ class Tokens_Table extends WP_List_Table {
 
     function get_bulk_actions() {
         $actions = array(
-          'delete'    => 'Delete'
+          'delete'    => geideaTokensDelete
         );
         return $actions;
     }
@@ -116,7 +116,7 @@ class Tokens_Table extends WP_List_Table {
         $all_data = [];
         foreach($tokens as $t){
             $data = $t->get_data();
-            $card = $data['card_type'] . ' ending in ' . $data['last4'] . " (expires ". $data['expiry_month'] . "/" . $data['expiry_year']  .")";
+            $card = $data['card_type'] . ' '. geideaTokensEndingIn .' ' . $data['last4'] . " (". geideaTokensExpires ." ". $data['expiry_month'] . "/" . $data['expiry_year']  .")";
             $card = ucfirst($card);
 
             $user = get_userdata( $data['user_id'] );
@@ -151,9 +151,7 @@ class Tokens_Table extends WP_List_Table {
 function render_tokens_table(){
     global $tokensTable;
     $tokensTable = new Tokens_Table();
-    echo '<div class="wrap"><h2>Saved tokens</h2>'; 
     $tokensTable->prepare_items(); 
-    $tokensTable->display(); 
-    echo '</div>'; 
+    $tokensTable->display();
 }
 ?>

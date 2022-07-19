@@ -9,7 +9,7 @@ class GIHtml  {
 
     public function create_form($result_fields){
         $arg_string = "'". $result_fields['merchantGatewayKey'] ."', '".$result_fields['orderId'] . "', '".$result_fields['amount'] . "', '". $result_fields['currencyId'] . "', '". $result_fields["callbackUrl"] . "', '". $result_fields["successUrl"]."' , '". 
-                $result_fields["saveCard"] ."', '".$result_fields['customerEmail'] ."', '".$result_fields['billingAddress'] ."', '".$result_fields['merchantLogoUrl'] ."', '".$result_fields['language'] ."', '".$result_fields['headerColor'] ."', '".$result_fields['billingAddress'] ."', '".$result_fields['shippingAddress'] ."', '".$result_fields['integrationType'] ."', '".$result_fields['name'] ."', '".$result_fields['version'] ."', '".$result_fields['pluginVersion'] ."', '".$result_fields['partnerId']   ."'";
+                $result_fields["saveCard"] ."', '".$result_fields['customerEmail'] ."', '".$result_fields['billingAddress'] ."', '".$result_fields['merchantLogoUrl'] ."', '".$result_fields['language'] ."', '".$result_fields['headerColor'] ."', '".$result_fields['billingAddress'] ."', '".$result_fields['shippingAddress'] ."', '".$result_fields['integrationType'] ."', '".$result_fields['name'] ."', '".$result_fields['version'] ."', '".$result_fields['pluginVersion'] ."', '".$result_fields['partnerId'] ."', '".$result_fields['receiptEnabled']   ."'";
 
         $inline_script = 'function giPaymentWrapper(){
             startGIPayment('.$arg_string.');

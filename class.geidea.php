@@ -12,7 +12,7 @@ require ABSPATH . 'wp-includes/version.php';
  *
  * @class       WC_Geidea
  * @extends     WC_Payment_Gateway
- * @version     1.0.12
+ * @version     1.0.13
  * @author      Geidea
  */ 
 
@@ -79,6 +79,18 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway {
         if (!empty($_GET['wc-api']) && $_GET['wc-api'] == 'geidea') {
             do_action('woocommerce_api_wc_' . $this->id);
         }
+    }
+
+    public function add_card_tokens_menu() {
+        add_submenu_page(
+            'woocommerce',
+            geideaTokensTitle,
+            geideaTokensTitle,
+            'manage_woocommerce',
+            'card_tokens',
+            array($this, 'tokens_table'),
+            3
+        );
     }
 
     public function process_admin_options() {
@@ -220,6 +232,12 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway {
                 'description' => '',
                 'default' => ''
             ),
+            'receipt_enabled' => array(
+                'title' => geideaSettingsReceiptEnabled,
+                'type' => 'checkbox',
+                'label' => ' ',
+                'default' => 'no'
+            ),
             'order_status_sucess' => array(
                 'title' => geideaSettingsOrderStatusSuccess,
                 'type' => 'select',
@@ -283,12 +301,26 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway {
      * The output html form - settings to the admin panel
      * */
     public function admin_options() {
+        ?>
+        <h3><?php echo geideaTitle?></h3>
+        <table class="form-table">
+        <?php
+        //Generate the HTML For the settings form.
+        $form_fields = $this->get_form_fields();
+
+        $this->generate_settings_html($form_fields, true);
+        ?>
+        </table>
+        <?php   
+    }
+
+    public function tokens_table() {
         $second_action = ( isset($_POST['action2']) ) ? sanitize_key( $_POST['action2'] ) : false;
         if($second_action && $second_action == 'delete'){
             foreach($_POST as $k => $param){
                 $san_param = sanitize_key($k);
                 if(substr( $san_param, 0, 12 ) == "delete_token"){   
-                    $token_id = substr($san_param, -1);
+                    $token_id = str_replace("delete_token_", "", $san_param);
                     $this->delete_token($token_id);
                 }
             }
@@ -303,17 +335,14 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway {
         }
 
         ?>
-        <h3><?php echo geideaTitle?></h3>
-        <table class="form-table">
+        <div class="wrap"><h2><?php echo geideaTokensTitle?></h2>
+            <form method="post">
+            <?php
+            render_tokens_table();
+            ?>
+            </form>
+        </div>
         <?php
-        //Generate the HTML For the settings form.
-        $form_fields = $this->get_form_fields();
-
-        $this->generate_settings_html($form_fields, true);
-        ?>
-        </table>
-        <?php
-        render_tokens_table();
     }
 
     function get_formatted_billing_address($order){
@@ -392,6 +421,7 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway {
         $result_fields['version'] = $wp_version;
         $result_fields['pluginVersion'] = GEIDEA_ONLINE_PAYMENTS_CURRENT_VERSION;
         $result_fields['partnerId'] = $this->get_option('partner_id');
+        $result_fields['receiptEnabled'] = $this->get_option('receipt_enabled');
 
         $this->html->create_form($result_fields);
         
