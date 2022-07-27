@@ -18,7 +18,7 @@ define('geideaSettingsLogo', 'العلامة التجارية');
 define('geideaSettingsHeaderColor', 'لون بوابة الدفع');
 define('geideaSettingsHeaderColorDesc', 'اختياري. سيتم استخدام هذا اللون لتخصيص تصميم الواجهة. يمكنك استخدام <a href="https://htmlcolorcodes.com/color-picker" target="_blank">أداة اختيار الألوان</a> لاختيار اللون المفضل.');
 define('geideaSettingsPartnerId', 'هوية الشريك');
-define('geideaSettingsReceiptEnabled', 'RECEIPT ENABLED');
+define('geideaSettingsReceiptEnabled', 'تفعيل اظهار فاتورة الدفع');
 define('geideaOrderResultCreated', 'الطلب في انتظار الدفع. رقم الطلب: s%. حالة الطلب: %s.');
 define('geideaErrorRequired', 'الحقل "%s" اجباري.');
 
