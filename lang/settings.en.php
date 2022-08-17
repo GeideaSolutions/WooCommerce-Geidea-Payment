@@ -21,8 +21,6 @@ define('geideaSettingsPartnerId', 'Partner Id');
 define('geideaSettingsReceiptEnabled', 'Receipt Enabled');
 define('geideaOrderResultCreated', 'Expected payment of order. Order number: %s. Status order: %s.');
 define('geideaErrorRequired', 'Field "%s" must not be empty.');
-
-// Card Tokens
 define('geideaTokensTitle', 'Card Tokens');
 define('geideaTokensCard', 'Card');
 define('geideaTokensUsername', 'Username');
@@ -30,3 +28,9 @@ define('geideaTokensToken', 'Token');
 define('geideaTokensDelete', 'Delete');
 define('geideaTokensEndingIn', 'ending in');
 define('geideaTokensExpires', 'expires');
+define('geideaOrderRefunded', 'The order was refunded. Reason: %s. TransactionId: %s. Amount: %s.');
+define('geideaPaymentGatewayError', 'Payment gateway error!');
+define('geideaRefundNotCompletedOrderError', 'Refund failed! You can only refund the completed order!');
+define('geideaRefundInvalidAmountError', 'Refund failed! You can only refund the entire amount!');
+define('geideaRefundTransactionError', 'Transaction error: %s');
+define('geideaRefundIncorrectStatus', 'Refund failed: incorrect order status!');

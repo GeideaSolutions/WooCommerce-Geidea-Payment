@@ -12,7 +12,7 @@ require ABSPATH . 'wp-includes/version.php';
  *
  * @class       WC_Geidea
  * @extends     WC_Payment_Gateway
- * @version     1.0.13
+ * @version     1.1.0
  * @author      Geidea
  */
 
@@ -52,9 +52,9 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
         $this->supports = array(
             'products',
             'tokenization',
+            'refunds',
         );
 
-        //Hel: Get setting values
         $this->title = $this->get_option('title');
         $this->enabled = $this->get_option('enabled');
         $this->description = $this->get_option('description');
@@ -69,7 +69,6 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
 
         $this->config = require 'config.php';
 
-        //The connections hooks
         if (version_compare(WOOCOMMERCE_VERSION, '2.0.0', '>=')) {
             add_action('woocommerce_update_options_payment_gateways_' . $this->id, array(&$this, 'process_admin_options'));
         } else {
@@ -564,6 +563,70 @@ render_tokens_table();
         );
     }
 
+    public function process_refund($order_id, $amount = null, $reason = '')
+    {
+        $order = wc_get_order($order_id);
+
+        if (!$order) {
+            return false;
+        }
+
+        $options = $this->get_options();
+        // Order success status in settings at the time of placing order
+        $successStatus = $order->get_meta('Order Success Status Setting', true);
+        if ($order->post_status != $options['orderStatusSuccess']
+            && $order->post_status != $successStatus) {
+            throw new Exception(geideaRefundNotCompletedOrderError);
+        }
+
+        if ($order->order_total != $amount) {
+            throw new Exception(geideaRefundInvalidAmountError);
+        }
+
+        $values = [];
+        $values['orderId'] = $order->get_meta('Geidea Order Id', true);
+        $merchantKey = $this->get_option('merchant_gateway_key');
+        $password = $this->get_option('merchant_password');
+
+        $result = $this->functions->send_gi_request(
+            $this->config['refundUrl'],
+            $merchantKey,
+            $password,
+            $values
+        );
+
+        if (!empty($result['errors'])) {
+            throw new Exception(geideaPaymentGatewayError);
+        }
+
+        if ($result['responseCode'] != '000') {
+            $error_message = sprintf(geideaRefundTransactionError, $result['detailedResponseMessage']);
+            throw new Exception($error_message);
+        }
+
+        if ($result['order']['detailedStatus'] != 'Refunded') {
+            throw new Exception(geideaRefundIncorrectStatus);
+        }
+
+        $transactions = $result['order']['transactions'];
+        $refund_transaction = null;
+        foreach ($transactions as $t) {
+            if ($t['type'] == 'Refund') {
+                $refund_transaction = $t;
+            }
+        }
+
+        if (!empty($refund_transaction)) {
+            $text = sprintf(geideaOrderRefunded,
+                $reason,
+                $refund_transaction["transactionId"],
+                $refund_transaction["amount"]);
+            $order->add_order_note($text);
+        }
+
+        return true;
+    }
+
     /**
      * Return handler for Hosted Payments
      */
@@ -650,6 +713,7 @@ render_tokens_table();
 
                 $wc_order->update_meta_data('Geidea Order Id', $order_id);
                 $wc_order->update_meta_data('Merchant Reference Id', $merchant_reference_id);
+                $wc_order->update_meta_data('Order Success Status Setting', $options["orderStatusSuccess"]);
 
                 $this->payment_complete($wc_order);
                 // Remove cart
@@ -674,6 +738,7 @@ render_tokens_table();
                 $wc_order->update_meta_data('Geidea Order Id', $order_id);
                 $wc_order->update_meta_data('Merchant Reference Id', $merchant_reference_id);
                 $wc_order->update_meta_data('Detailed payment gate response message', $text);
+                $wc_order->update_meta_data('Order Success Status Setting', $options["orderStatusSuccess"]);
 
                 $wc_order->update_status(apply_filters('woocommerce_payment_complete_order_status', 'failed', $wc_order->id));
 

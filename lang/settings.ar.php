@@ -21,8 +21,6 @@ define('geideaSettingsPartnerId', 'هوية الشريك');
 define('geideaSettingsReceiptEnabled', 'تفعيل اظهار فاتورة الدفع');
 define('geideaOrderResultCreated', 'الطلب في انتظار الدفع. رقم الطلب: s%. حالة الطلب: %s.');
 define('geideaErrorRequired', 'الحقل "%s" اجباري.');
-
-// Card Tokens
 define('geideaTokensTitle', 'رموز البطاقات');
 define('geideaTokensCard', 'البطاقة');
 define('geideaTokensUsername', 'اسم المستخدم');
@@ -30,3 +28,9 @@ define('geideaTokensToken', 'رمز');
 define('geideaTokensDelete', 'حذف');
 define('geideaTokensEndingIn', 'المنتهية ب');
 define('geideaTokensExpires', 'تنتهي صلاحيتها');
+define('geideaOrderRefunded', 'تم استرداد أموال الطلب. السبب: s%. رقم العملية: s%. مبلغ: s%.');
+define('geideaPaymentGatewayError', 'خطأ في بوابة الدفع!');
+define('geideaRefundNotCompletedOrderError', 'فشل في الاسترداد! يمكنك فقط استرداد طلب مكتمل!');
+define('geideaRefundInvalidAmountError', 'فشل في الاسترداد! يمكنك فقط استرداد المبلغ بالكامل!');
+define('geideaRefundTransactionError', 'خطأ في العملية: s%');
+define('geideaRefundIncorrectStatus', 'فشل في استرداد الأموال: حالة الطلب غير صحيحة!');
