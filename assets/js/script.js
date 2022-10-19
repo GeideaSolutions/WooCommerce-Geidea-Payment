@@ -1,53 +1,61 @@
-function onDOMLoaded() {
-    setTimeout(function() {
-        giPaymentWrapper();
-    }, 500);
+var y_offsetWhenScrollDisabled = 0;
+
+function disableScrollOnBody() {
+    y_offsetWhenScrollDisabled = jQuery(window).scrollTop();
+    jQuery('body').addClass('scrollDisabled').css('margin-top', -y_offsetWhenScrollDisabled);
 }
 
-document.addEventListener("DOMContentLoaded", onDOMLoaded);
+function enableScrollOnBody() {
+    jQuery('body').removeClass('scrollDisabled').css('margin-top', 0);
+    jQuery(window).scrollTop(y_offsetWhenScrollDisabled);
+}
 
-function startGIPayment(merchantGatewayKey, orderId, amount, currencyId, callbackUrl, successUrl, cardOnFile, customerEmail, billingAddress, merchantLogoUrl, language, headerColor, billingAddressString, shippingAddressString, integrationType, name, version, pluginVersion, partnerId, receiptEnabled) {
+function initGIPaymentOnCheckoutPage(data) {
+    disableScrollOnBody();
+
     try {
         var onSuccess = function(_message, _statusCode) {
-            setTimeout(document.location.href = successUrl, 1000);
+            setTimeout(document.location.href = data.successUrl, 1000);
         }
 
         var onError = function(error) {
-            var div = document.getElementById("gi_payment_errors").style.display = "block";
-            var error_span = document.getElementById("gi_payment_error_message");
-            error_span.innerHTML = error.responseMessage;
+            enableScrollOnBody();
+            jQuery("#place_order").removeAttr("disabled");
+            alert("Geidea Payment Gateway error: " + error.responseMessage);
         }
 
         var onCancel = function() {
-            document.location.href = "/";
+            enableScrollOnBody();
+            jQuery("#place_order").removeAttr("disabled");
         }
 
-        var billingAddress = JSON.parse(billingAddressString);
-        var shippingAddress = JSON.parse(shippingAddressString);
+        var billingAddress = JSON.parse(data.billingAddress);
+        var shippingAddress = JSON.parse(data.shippingAddress);
 
-        var api = new GeideaApi(merchantGatewayKey, onSuccess, onError, onCancel);
+        var api = new GeideaApi(data.merchantGatewayKey, onSuccess, onError, onCancel);
 
         api.configurePayment({
-            callbackUrl: callbackUrl,
-            amount: parseFloat(amount),
-            currency: currencyId,
-            merchantReferenceId: orderId,
-            cardOnFile: Boolean(cardOnFile),
+            callbackUrl: data.callbackUrl,
+            amount: parseFloat(data.amount),
+            currency: data.currencyId,
+            merchantReferenceId: data.orderId.toString(),
+            cardOnFile: Boolean(data.cardOnFile),
             initiatedBy: "Internet",
-            customerEmail: customerEmail,
+            customerEmail: data.customerEmail,
             billingAddress: billingAddress,
             shippingAddress: shippingAddress,
-            merchantLogoUrl: merchantLogoUrl,
-            language: language,
-            styles: { "headerColor": headerColor },
-            integrationType: integrationType,
-            name: name,
-            version: version,
-            pluginVersion: pluginVersion,
-            partnerId: partnerId,
-            isTransactionReceiptEnabled: receiptEnabled === 'yes'
+            merchantLogoUrl: data.merchantLogoUrl,
+            language: data.language,
+            styles: { "headerColor": data.headerColor },
+            integrationType: data.integrationType,
+            name: data.name,
+            version: data.version,
+            pluginVersion: data.pluginVersion,
+            partnerId: data.partnerId,
+            isTransactionReceiptEnabled: data.receiptEnabled === "yes"
         });
         api.startPayment();
+
     } catch (err) {
         alert(err);
     }

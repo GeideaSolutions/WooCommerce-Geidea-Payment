@@ -12,12 +12,13 @@ require ABSPATH . 'wp-includes/version.php';
  *
  * @class       WC_Geidea
  * @extends     WC_Payment_Gateway
- * @version     1.2.0
+ * @version     1.2.1
  * @author      Geidea
  */
 
 add_action('wp_ajax_ajax_order', array('WC_Gateway_Geidea', 'init_payment'));
 add_action('wp_ajax_nopriv_ajax_order', array('WC_Gateway_Geidea', 'init_payment'));
+
 class WC_Gateway_Geidea extends WC_Payment_Gateway
 {
     public static $instance = null;
@@ -75,11 +76,27 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
         } else {
             add_action('woocommerce_update_options_payment_gateways', array(&$this, 'process_admin_options'));
         }
+        add_action('woocommerce_receipt_' . $this->id, array(&$this, 'receipt_page'));
         add_action('woocommerce_api_wc_' . $this->id, array($this, 'return_handler'));
         add_action('wp_footer', array($this, 'checkout_js_order_handler'));
 
+        add_action('wp_footer', array($this, 'add_scroll_script'));
+
         if (!empty($_GET['wc-api']) && $_GET['wc-api'] == 'geidea') {
             do_action('woocommerce_api_wc_' . $this->id);
+        }
+    }
+
+    public function add_scroll_script() {
+        if (is_checkout() && !is_wc_endpoint_url()) {
+            wp_register_script('geidea_sdk', $this->config['jsSdkUrl']);
+            wp_enqueue_script('geidea_sdk');
+    
+            wp_register_style('geidea', plugins_url('assets/css/gi-styles.css', __FILE__));
+            wp_enqueue_style('geidea');
+      
+            wp_register_script('geidea', plugins_url('assets/js/script.js', __FILE__));
+            wp_enqueue_script('geidea');
         }
     }
 
@@ -95,16 +112,18 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
         $is_order_pay_page = is_checkout() && is_wc_endpoint_url('order-pay');
 
         $form_selector = $is_checkout_page ? 'form.checkout' : 'form#order_review';
-        if ($is_checkout_page || $is_order_pay_page) {
+        if ($is_order_pay_page) {
             wp_register_script('geidea_sdk', $this->config['jsSdkUrl']);
             wp_enqueue_script('geidea_sdk');
+
+            $order_id = absint( get_query_var( 'order-pay' ) );
         ?>
             <script type="text/javascript">
             jQuery(function($){
                 if (typeof wc_checkout_params === 'undefined')
                     return false;
 
-                $(document.body).on("click", "#place_order" ,function(evt) {
+                $(document.body).on("click", "#place_order", function(evt) {
                     var choosenPaymentMethod = $('input[name^="payment_method"]:checked').val();
                     var choosenToken = $('input[name^="wc-geidea-payment-token"]:checked').val();
 
@@ -126,6 +145,7 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
                                 'action': 'ajax_order',
                                 'fields': $('<?php echo $form_selector; ?>').serializeArray(),
                                 'user_id': <?php echo get_current_user_id(); ?>,
+                                'order_id': <?php echo $order_id; ?>,
                             },
                             dataType: 'json',
                             success: function (result) {
@@ -133,7 +153,7 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
                                     alert(result.message);
                                     $('#place_order').removeAttr('disabled');
                                 } else {
-                                    initGIPayment(result);
+                                    initGIPaymentOnOrderPayPage(result);
                                 }
                             },
                             error: function(error) {
@@ -145,7 +165,7 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
                 });
             });
 
-            function initGIPayment(data) {
+            function initGIPaymentOnOrderPayPage(data) {
                 try {
                     var onSuccess = function(_message, _statusCode) {
                         setTimeout(document.location.href = data.successUrl, 1000);
@@ -196,68 +216,20 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
 
     public function init_payment()
     {
-        if (isset($_POST['fields']) && !empty($_POST['fields'])) {
+        if ( (isset($_POST['fields']) && !empty($_POST['fields'])) ) {
             $payment_obj = WC_Gateway_Geidea::getInstance();
+            $order = null;
 
             $data = [];
             foreach ($_POST['fields'] as $values) {
                 $data[$values['name']] = $values['value'];
             }
 
-            $order = null;
-            $session_data = WC()->session->get_session_data();
-            $order_id = (int) $session_data['order_awaiting_payment'];
+            $order_id = $_POST['order_id'];
 
             if ($order_id != 0) {
                 // Get an existing order
                 $order = wc_get_order($order_id);
-            } else {
-                // Create a new order
-                $order = new WC_Order();
-                $cart = WC()->cart;
-                $checkout = WC()->checkout;
-
-                $cart_hash = md5(json_encode(wc_clean($cart->get_cart_for_session())) . $cart->total);
-                $available_gateways = WC()->payment_gateways->get_available_payment_gateways();
-
-                foreach ($data as $key => $value) {
-                    if (is_callable(array($order, "set_{$key}"))) {
-                        $order->{"set_{$key}"}($value);
-                    } elseif ((0 === stripos($key, 'billing_') || 0 === stripos($key, 'shipping_'))
-                        && !in_array($key, array('shipping_method', 'shipping_total', 'shipping_tax'))) {
-                        $order->update_meta_data('_' . $key, $value);
-                    }
-                }
-
-                $order->set_created_via('checkout');
-                $order->set_cart_hash($cart_hash);
-                $order->set_customer_id(apply_filters('woocommerce_checkout_customer_id', isset($_POST['user_id']) ? $_POST['user_id'] : ''));
-                $order->set_currency(get_woocommerce_currency());
-                $order->set_prices_include_tax('yes' === get_option('woocommerce_prices_include_tax'));
-                $order->set_customer_ip_address(WC_Geolocation::get_ip_address());
-                $order->set_customer_user_agent(wc_get_user_agent());
-                $order->set_customer_note(isset($data['order_comments']) ? $data['order_comments'] : '');
-                $order->set_payment_method(isset($available_gateways[$data['payment_method']]) ? $available_gateways[$data['payment_method']] : $data['payment_method']);
-                $order->set_shipping_total($cart->get_shipping_total());
-                $order->set_discount_total($cart->get_discount_total());
-                $order->set_discount_tax($cart->get_discount_tax());
-                $order->set_cart_tax($cart->get_cart_contents_tax() + $cart->get_fee_tax());
-                $order->set_shipping_tax($cart->get_shipping_tax());
-                $order->set_total($cart->get_total('edit'));
-
-                $checkout->create_order_line_items($order, $cart);
-                $checkout->create_order_fee_lines($order, $cart);
-                $checkout->create_order_shipping_lines($order, WC()->session->get('chosen_shipping_methods'), WC()->shipping->get_packages());
-                $checkout->create_order_tax_lines($order, $cart);
-                $checkout->create_order_coupon_lines($order, $cart);
-
-                do_action('woocommerce_checkout_create_order', $order, $data);
-
-                $order_id = $order->save();
-
-                do_action('woocommerce_checkout_update_order_meta', $order_id, $data);
-
-                WC()->session->set('order_awaiting_payment', $order_id);
             }
 
             if ($order) {
@@ -404,6 +376,82 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
         $this->settings['return_url'] = 'yes';
 
         return update_option($this->get_option_key(), apply_filters('woocommerce_settings_api_sanitized_fields_' . $this->id, $this->settings), 'yes');
+    }
+
+    public function process_payment( $order_id ) {
+        $order = new WC_Order($order_id);
+
+        $user_id = get_current_user_id();
+
+        $save_card = false;
+
+        if ($user_id != 0) {
+            $token = $this->get_token();
+            if ($token) {
+                $success = $this->tokenise_payment($order, $token);
+
+                if ($success) {
+                    return array(
+                        'result' => 'success',
+                        'redirect' => $this->get_return_url($order),
+                    );
+                } else {
+                    return array('result' => 'fail');
+                }
+            }
+
+            $save_card = $this->need_to_save_new_card($user_id);
+        }
+
+        //get information of order
+        $order = wc_get_order($order_id);
+
+        $order_currency = $order->currency;
+        $available_currencies = $this->config['availableCurrencies'];
+
+        $result_currency = in_array($order_currency, $available_currencies) ? $order_currency : $this->get_option('currency_id');
+
+        global $wp_version;
+        $lang = get_bloginfo('language');
+
+        $result_fields = [];
+        $result_fields['orderId'] = $order->id;
+        $result_fields['amount'] = number_format($order->order_total, 2, '.', '');
+        $result_fields['merchantGatewayKey'] = $this->get_option('merchant_gateway_key');
+        $result_fields['currencyId'] = $result_currency;
+        $result_fields['successUrl'] = $this->get_return_url($order);
+        $result_fields['failUrl'] = $this->get_return_url($order);
+        $result_fields['callbackUrl'] = get_site_url() . '/?wc-api=geidea';
+        $result_fields['headerColor'] = $this->get_option('header_color');
+        $result_fields['cardOnFile'] = $save_card;
+        $result_fields['customerEmail'] = sanitize_text_field($order->get_billing_email());
+        $result_fields['billingAddress'] = json_encode($this->get_formatted_billing_address($order));
+        $result_fields['shippingAddress'] = json_encode($this->get_formatted_shipping_address($order));
+        $result_fields['merchantLogoUrl'] = $this->get_option('logo');
+        if ($lang == "ar") {
+            $result_fields['language'] = $lang;
+        }
+
+        $result_fields['integrationType'] = 'plugin';
+        $result_fields['name'] = 'Wordpress';
+        $result_fields['version'] = $wp_version;
+        $result_fields['pluginVersion'] = GEIDEA_ONLINE_PAYMENTS_CURRENT_VERSION;
+        $result_fields['partnerId'] = $this->get_option('partner_id');
+
+        $encode_params = json_encode($result_fields);
+
+        $script = '
+            <script>
+                initGIPaymentOnCheckoutPage('.$encode_params.');
+            </script>
+        ';
+
+        return array(
+            'result' => 'success',
+            'messages' => $script,
+            'refresh' => true,
+            'reload' => false,
+        );
     }
 
     /**
@@ -557,7 +605,7 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
         <h3><?php echo geideaTitle ?></h3>
         <table class="form-table">
         <?php
-//Generate the HTML For the settings form.
+        //Generate the HTML For the settings form.
         $form_fields = $this->get_form_fields();
 
         $this->generate_settings_html($form_fields, true);
@@ -664,29 +712,42 @@ render_tokens_table();
 
     public function tokenise_payment($order, $token)
     {
-        $values = [];
+        $params = [];
 
         $order_currency = $order->currency;
         $available_currencies = $this->config['availableCurrencies'];
 
         $result_currency = in_array($order_currency, $available_currencies) ? $order_currency : $this->get_option('currency_id');
-        $values["currency"] = $result_currency;
+        $params["currency"] = $result_currency;
 
-        $values["amount"] = number_format($order->order_total, 2, '.', '');
+        $params["amount"] = number_format($order->order_total, 2, '.', '');
 
-        $values["tokenId"] = $token->get_token();
+        $params["tokenId"] = $token->get_token();
 
-        $values["initiatedBy"] = "Internet";
-        $values["merchantReferenceId"] = (string) $order->id;
-        $values["callbackUrl"] = get_site_url() . '/?wc-api=geidea';
+        $params["initiatedBy"] = "Internet";
+        $params["merchantReferenceId"] = (string) $order->id;
+        $params["callbackUrl"] = get_site_url() . '/?wc-api=geidea';
 
         $merchantKey = $this->get_option('merchant_gateway_key');
         $password = $this->get_option('merchant_password');
 
-        $result = $this->functions->send_gi_request($this->config['payByTokenUrl'], $merchantKey, $password, $values);
+        $result = $this->functions->send_gi_request(
+            $this->config['payByTokenUrl'], 
+            $merchantKey, 
+            $password, 
+            $params
+        );
 
-        if (!empty($result["errors"])) {
-            foreach ($result["errors"] as $k => $v) {
+        if ($result instanceof WP_Error) {
+            $error = $result->get_error_message();
+            wc_add_notice($error, 'error');
+            return false;
+        } else {
+            $decoded_result = json_decode($result["body"], true);
+        }
+
+        if (!empty($decoded_result["errors"])) {
+            foreach ($decoded_result["errors"] as $k => $v) {
                 foreach ($v as $error) {
                     wc_add_notice($error, 'error');
                 }
@@ -694,54 +755,14 @@ render_tokens_table();
             return false;
         }
 
-        if (isset($result["detailedResponseMessage"])) {
-            if ($result["responseMessage"] != 'Success') {
-                wc_add_notice($result["detailedResponseMessage"], 'error');
+        if (isset($decoded_result["detailedResponseMessage"])) {
+            if ($decoded_result["responseMessage"] != 'Success') {
+                wc_add_notice($decoded_result["detailedResponseMessage"], 'error');
                 return false;
             }
         }
 
         return true;
-    }
-
-    /**
-     * Process the payment and return the result
-     * */
-    public function process_payment($order_id)
-    {
-        $order = new WC_Order($order_id);
-
-        $user_id = get_current_user_id();
-
-        $save_card = false;
-
-        if ($user_id != 0) {
-            $token = $this->get_token();
-            if ($token) {
-                $success = $this->tokenise_payment($order, $token);
-
-                if ($success) {
-                    return array(
-                        'result' => 'success',
-                        'redirect' => $this->get_return_url($order),
-                    );
-                } else {
-                    return array('result' => 'fail');
-                }
-            }
-
-            $save_card = $this->need_to_save_new_card($user_id);
-        }
-
-        $redirect_url = $order->get_checkout_payment_url(true);
-        if ($save_card) {
-            $redirect_url .= "&save_card=true";
-        }
-
-        return array(
-            'result' => 'success',
-            'redirect' => $redirect_url,
-        );
     }
 
     public function process_refund($order_id, $amount = null, $reason = '')
@@ -776,20 +797,28 @@ render_tokens_table();
             $values
         );
 
-        if (!empty($result['errors'])) {
+        if ($result instanceof WP_Error) {
+            $error = $result->get_error_message();
+            wc_add_notice($error, 'error');
+            return false;
+        } else {
+            $decoded_result = json_decode($result["body"], true);
+        }
+
+        if (!empty($decoded_result['errors'])) {
             throw new Exception(geideaPaymentGatewayError);
         }
 
-        if ($result['responseCode'] != '000') {
-            $error_message = sprintf(geideaRefundTransactionError, $result['detailedResponseMessage']);
+        if ($decoded_result['responseCode'] != '000') {
+            $error_message = sprintf(geideaRefundTransactionError, $decoded_result['detailedResponseMessage']);
             throw new Exception($error_message);
         }
 
-        if ($result['order']['detailedStatus'] != 'Refunded') {
+        if ($decoded_result['order']['detailedStatus'] != 'Refunded') {
             throw new Exception(geideaRefundIncorrectStatus);
         }
 
-        $transactions = $result['order']['transactions'];
+        $transactions = $decoded_result['order']['transactions'];
         $refund_transaction = null;
         foreach ($transactions as $t) {
             if ($t['type'] == 'Refund') {
