@@ -2,3 +2,9 @@
     display: none;
     color: #f10a0a;
 }
+
+.scrollDisabled {
+    position: fixed;
+    margin-top: 0;
+    width: 100%;
+}

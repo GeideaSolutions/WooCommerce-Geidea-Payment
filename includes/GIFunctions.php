@@ -22,6 +22,6 @@ class GIFunctions
             'body' => $post_params,
         );
         $result = wp_remote_post($gateway_url, $args);
-        return json_decode($result["body"], true);
+        return $result;
     }
 }
