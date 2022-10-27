@@ -12,7 +12,7 @@ require ABSPATH . 'wp-includes/version.php';
  *
  * @class       WC_Geidea
  * @extends     WC_Payment_Gateway
- * @version     1.2.1
+ * @version     1.2.2
  * @author      Geidea
  */
 
@@ -80,7 +80,7 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
         add_action('woocommerce_api_wc_' . $this->id, array($this, 'return_handler'));
         add_action('wp_footer', array($this, 'checkout_js_order_handler'));
 
-        add_action('wp_footer', array($this, 'add_scroll_script'));
+        add_action('wp_enqueue_scripts', array($this, 'add_scroll_script'));
 
         if (!empty($_GET['wc-api']) && $_GET['wc-api'] == 'geidea') {
             do_action('woocommerce_api_wc_' . $this->id);
@@ -88,15 +88,15 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
     }
 
     public function add_scroll_script() {
-        if (is_checkout() && !is_wc_endpoint_url()) {
-            wp_register_script('geidea_sdk', $this->config['jsSdkUrl']);
-            wp_enqueue_script('geidea_sdk');
-    
+        if (is_checkout() && !is_wc_endpoint_url()) {  
             wp_register_style('geidea', plugins_url('assets/css/gi-styles.css', __FILE__));
             wp_enqueue_style('geidea');
       
             wp_register_script('geidea', plugins_url('assets/js/script.js', __FILE__));
             wp_enqueue_script('geidea');
+
+            wp_register_script('geidea_sdk', $this->config['jsSdkUrl']);
+            wp_enqueue_script('geidea_sdk');
         }
     }
 
@@ -673,6 +673,36 @@ render_tokens_table();
 
         return $formatted_address;
     }
+
+    private function get_card_icon($icon_name)
+    {
+        $iconPath = GEIDEA_DIR . "assets/imgs/icons/{$icon_name}.svg";
+        $icon = '';
+        if (file_exists($iconPath)) {
+            $icon = GEIDEA_ICONS_URL . "{$icon_name}.svg";
+        }
+
+        return $icon;
+    }
+
+    public function get_saved_payment_method_option_html($token) {
+        $icon_url = $this->get_card_icon($token->get_data()['card_type']);
+
+		$html = sprintf(
+			'<li class="woocommerce-SavedPaymentMethods-token">
+				<input id="wc-%1$s-payment-token-%2$s" type="radio" name="wc-%1$s-payment-token" value="%2$s" style="width:auto;" class="woocommerce-SavedPaymentMethods-tokenInput" %4$s />
+                <img class="gi-card-icon" src="%5$s" />
+				<label for="wc-%1$s-payment-token-%2$s">%3$s</label>
+			</li>',
+			esc_attr($this->id),
+			esc_attr($token->get_id()),
+			esc_html($token->get_display_name()),
+			checked($token->is_default(), true, false),
+            esc_attr($icon_url)
+		);
+
+        return apply_filters( 'woocommerce_payment_gateway_get_saved_payment_method_option_html', $html, $token, $this );
+    } 
 
     private function get_token()
     {

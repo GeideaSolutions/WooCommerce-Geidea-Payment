@@ -57,6 +57,7 @@ function initGIPaymentOnCheckoutPage(data) {
         api.startPayment();
 
     } catch (err) {
+        enableScrollOnBody();
         alert(err);
     }
 }
