@@ -3,7 +3,7 @@
 /*
 Plugin Name: Geidea Online Payments
 Description: Geidea Online Payments.
-Version: 1.2.1
+Version: 1.2.2
 Author: Geidea
 Author URI: https://geidea.net
 
@@ -29,6 +29,7 @@ if (!defined('ABSPATH')) {
 }
 
 define('GEIDEA_DIR', plugin_dir_path(__FILE__));
+define('GEIDEA_ICONS_URL', plugins_url("assets/imgs/icons/", __FILE__));
 
 $plugin_data = get_file_data(__FILE__, array('Version' => 'Version'), false);
 $plugin_version = $plugin_data['Version'];
