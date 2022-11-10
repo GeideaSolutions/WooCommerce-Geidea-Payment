@@ -12,7 +12,7 @@ require ABSPATH . 'wp-includes/version.php';
  *
  * @class       WC_Geidea
  * @extends     WC_Payment_Gateway
- * @version     1.2.2
+ * @version     1.2.3
  * @author      Geidea
  */
 
@@ -250,13 +250,20 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
                 $payment_data['currencyId'] = $result_currency;
                 $payment_data['successUrl'] = $payment_obj->get_return_url($order);
                 $payment_data['failUrl'] = $payment_obj->get_return_url($order);
-                $payment_data['callbackUrl'] = get_site_url() . '/?wc-api=geidea';
                 $payment_data['headerColor'] = $payment_obj->get_option('header_color');
                 $payment_data['cardOnFile'] = $save_card;
                 $payment_data['customerEmail'] = sanitize_text_field($order->get_billing_email());
                 $payment_data['billingAddress'] = json_encode($payment_obj->get_formatted_billing_address($order));
                 $payment_data['shippingAddress'] = json_encode($payment_obj->get_formatted_shipping_address($order));
-                $payment_data['merchantLogoUrl'] = $payment_obj->get_option('logo');
+
+                $callbackUrl = get_site_url() . '/?wc-api=geidea';
+                // Force https for Geidea Gateway
+                $payment_data['callbackUrl'] = str_replace('http://', 'https://', $callbackUrl);
+
+                $logoUrl = $payment_obj->get_option('logo');
+                // Force https for Geidea Gateway
+                $payment_data['merchantLogoUrl'] = str_replace('http://', 'https://', $logoUrl);
+
                 if ($lang == "ar") {
                     $payment_data['language'] = $lang;
                 }
@@ -421,13 +428,20 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
         $result_fields['currencyId'] = $result_currency;
         $result_fields['successUrl'] = $this->get_return_url($order);
         $result_fields['failUrl'] = $this->get_return_url($order);
-        $result_fields['callbackUrl'] = get_site_url() . '/?wc-api=geidea';
         $result_fields['headerColor'] = $this->get_option('header_color');
         $result_fields['cardOnFile'] = $save_card;
         $result_fields['customerEmail'] = sanitize_text_field($order->get_billing_email());
         $result_fields['billingAddress'] = json_encode($this->get_formatted_billing_address($order));
         $result_fields['shippingAddress'] = json_encode($this->get_formatted_shipping_address($order));
-        $result_fields['merchantLogoUrl'] = $this->get_option('logo');
+
+        $callbackUrl = get_site_url() . '/?wc-api=geidea';
+        // Force https for Geidea Gateway
+        $result_fields['callbackUrl'] = str_replace('http://', 'https://', $callbackUrl);
+
+        $logoUrl = $this->get_option('logo');
+        // Force https for Geidea Gateway
+        $result_fields['merchantLogoUrl'] = str_replace('http://', 'https://', $logoUrl);
+
         if ($lang == "ar") {
             $result_fields['language'] = $lang;
         }
@@ -756,7 +770,10 @@ render_tokens_table();
 
         $params["initiatedBy"] = "Internet";
         $params["merchantReferenceId"] = (string) $order->id;
-        $params["callbackUrl"] = get_site_url() . '/?wc-api=geidea';
+
+        $callbackUrl = get_site_url() . '/?wc-api=geidea';
+        // Force https for Geidea Gateway
+        $params['callbackUrl'] = str_replace('http://', 'https://', $callbackUrl);
 
         $merchantKey = $this->get_option('merchant_gateway_key');
         $password = $this->get_option('merchant_password');
