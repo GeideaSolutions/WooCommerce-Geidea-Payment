@@ -3,7 +3,7 @@
 /*
 Plugin Name: Geidea Online Payments
 Description: Geidea Online Payments.
-Version: 1.2.3
+Version: 1.2.4
 Author: Geidea
 Author URI: https://geidea.net
 
