@@ -61,7 +61,7 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
         $this->enabled = $this->get_option('enabled');
         $this->description = $this->get_option('description');
 
-        $this->logo = $this->get_option('logo');
+        $this->logo = $this->get_option('checkout_icon');
         $this->icon = apply_filters('woocommerce_' . $this->id . '_icon', (!empty($this->logo)
             ? $this->logo
             : plugins_url('assets/imgs/geidea-logo.svg', __FILE__)));
@@ -81,7 +81,7 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
         add_action('wp_footer', array($this, 'checkout_js_order_handler'));
 
         add_action('wp_enqueue_scripts', array($this, 'add_scroll_script'));
-
+ 
         if (!empty($_GET['wc-api']) && $_GET['wc-api'] == 'geidea') {
             do_action('woocommerce_api_wc_' . $this->id);
         }
@@ -173,7 +173,7 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
 
                     var onError = function(error) {
                         jQuery('#place_order').removeAttr('disabled');
-                        alert("Geidea Payment Gateway error: " + error.responseMessage);
+                        alert(<? echo geideaPaymentGatewayError; ?> + error.responseMessage);
                     }
 
                     var onCancel = function() {
@@ -284,7 +284,7 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
             } else {
                 $response = [
                     'result' => 'failure',
-                    'messages' => "Order not found",
+                    'messages' => geideaOrderNotFound,
                     "refresh" => false,
                     "reload" => false
                 ];
@@ -295,7 +295,7 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
         } else {
             $response = [
                 'result' => 'failure',
-                'messages' => "Request is empty",
+                'messages' => geideaEmptyRequest,
                 "refresh" => false,
                 "reload" => false
             ];
@@ -318,6 +318,40 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
         );
     }
 
+    /**
+     * Return errors if occured
+     * 
+     * @return array
+     */
+    function upload_logo($logo, $field) {
+        $errors = [];
+
+        $arr_file_type = wp_check_filetype(basename($logo['name']));
+        $uploaded_file_type = $arr_file_type['type'];
+
+        $allowed_file_types = array('image/jpg', 'image/jpeg', 'image/png', 'image/svg+xml');
+
+        if (in_array($uploaded_file_type, $allowed_file_types)) {
+
+            if (!function_exists('wp_handle_upload')) {
+                require_once ABSPATH . 'wp-admin/includes/file.php';
+            }
+
+            $uploaded_file = wp_handle_upload($logo, array('test_form' => false, 'unique_filename_callback' => 'generate_logo_filename'));
+
+            if (isset($uploaded_file['file'])) {
+                $this->settings[$field] = $uploaded_file['url'];
+            } else {
+                $errors[] = geideaFileUploadingError;
+            }
+
+        } else {
+            $errors[] = geideaWrongFileType;
+        }
+
+        return $errors;
+    }
+
     public function process_admin_options()
     {
         function generate_logo_filename($dir, $name, $ext)
@@ -330,7 +364,7 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
         $post_data = $this->get_post_data();
 
         foreach ($this->get_form_fields() as $key => $field) {
-            if ('title' !== $this->get_field_type($field) && $key !== 'logo') {
+            if ('title' !== $this->get_field_type($field) && ($key !== 'logo' && $key !== 'checkout_icon')) {
                 try {
                     $this->settings[$key] = $this->get_field_value($key, $field, $post_data);
                 } catch (Exception $e) {
@@ -340,28 +374,15 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
         }
 
         if (isset($_FILES['woocommerce_geidea_logo']) && ($_FILES['woocommerce_geidea_logo']['size'] > 0)) {
-            $arr_file_type = wp_check_filetype(basename($_FILES['woocommerce_geidea_logo']['name']));
-            $uploaded_file_type = $arr_file_type['type'];
+            $field = 'logo';
+            $upload_errors = $this->upload_logo($_FILES['woocommerce_geidea_logo'], $field);
+            $this->errors = array_merge($this->errors, $upload_errors);
+        }
 
-            $allowed_file_types = array('image/jpg', 'image/jpeg', 'image/png', 'image/svg+xml');
-
-            if (in_array($uploaded_file_type, $allowed_file_types)) {
-
-                if (!function_exists('wp_handle_upload')) {
-                    require_once ABSPATH . 'wp-admin/includes/file.php';
-                }
-
-                $uploaded_file = wp_handle_upload($_FILES['woocommerce_geidea_logo'], array('test_form' => false, 'unique_filename_callback' => 'generate_logo_filename'));
-
-                if (isset($uploaded_file['file'])) {
-                    $this->settings['logo'] = $uploaded_file['url'];
-                } else {
-                    $this->errors[] = "Something went wrong while uploading file!";
-                }
-
-            } else {
-                $this->errors[] = "Wrong file type!";
-            }
+        if (isset($_FILES['woocommerce_geidea_checkout_icon']) && ($_FILES['woocommerce_geidea_checkout_icon']['size'] > 0)) {
+            $field = 'checkout_icon';
+            $upload_errors = $this->upload_logo($_FILES['woocommerce_geidea_checkout_icon'], $field);
+            $this->errors = array_merge($this->errors, $upload_errors);
         }
 
         $san_merchant_gateway_key = sanitize_text_field($this->settings['merchant_gateway_key']);
@@ -473,17 +494,25 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
      */
     public function init_form_fields()
     {
-        //Get order status
         $statuses = wc_get_order_statuses();
 
         $options = get_option('woocommerce_' . $this->id . '_settings');
 
         $logo = $options['logo'];
         $merchantLogo = sanitize_text_field($logo);
-
-        if (empty($merchantLogo)) {
-            $merchantLogo = plugins_url('assets/imgs/geidea-logo.svg', __FILE__);
+        $merchantLogoDescr = geideaMerchantLogoDescription;
+        if (!empty($merchantLogo)) {
+            $merchantLogoDescr .= '</br><img src="' . esc_html($merchantLogo) . '" width="70"></br>';
         }
+
+        $checkoutIcon = $options['checkout_icon'];
+        $checkoutIcon = sanitize_text_field($checkoutIcon);
+        $checkoutIconDescr = geideaCheckoutIconDescription;
+        if (empty($checkoutIcon)) {
+            $checkoutIcon = plugins_url('assets/imgs/geidea-logo.svg', __FILE__);
+
+        }
+        $checkoutIconDescr .= '</br><img src="' . esc_html($checkoutIcon) . '" width="70"></br>'; 
 
         $this->form_fields = array(
             'enabled' => array(
@@ -525,11 +554,17 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
                 ],
                 'default' => 'SAR',
             ),
-            'logo' => array(
-                'title' => geideaSettingsLogo,
+            'checkout_icon' => array(
+                'title' => geideaCheckoutIcon,
                 'type' => 'file',
-                'description' => '<img src="' . esc_html($merchantLogo) . '" width="70">',
-                'default' => plugins_url('assets/imgs/geidea-logo.svg', __FILE__),
+                'description' => $checkoutIconDescr,
+                'default' => '',
+            ),
+            'logo' => array(
+                'title' => geideaMerchantLogo,
+                'type' => 'file',
+                'description' => $merchantLogoDescr,
+                'default' => '',
             ),
             'header_color' => array(
                 'title' => geideaSettingsHeaderColor,
