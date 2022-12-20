@@ -14,7 +14,6 @@ define('geideaSettingsCurrencyDefault', 'دائماً استخدم العملة 
 define('geideaSettingsCurrencyDefaultDesc', 'ستتم عملية الدفع بعملة بواببة الدفع الافتراضية حتى لو اختلفت عن عملة الموقع');
 define('geideaSettingsOrderStatusSuccess', 'حالة الطلب بعد اكتمال عملية الدفع');
 define('geideaSettingsOrderStatusWaiting', 'حالة الطلب لحين اكتمال عملية الدفع');
-define('geideaSettingsLogo', 'العلامة التجارية');
 define('geideaSettingsHeaderColor', 'لون بوابة الدفع');
 define('geideaSettingsHeaderColorDesc', 'اختياري. سيتم استخدام هذا اللون لتخصيص تصميم الواجهة. يمكنك استخدام <a href="https://htmlcolorcodes.com/color-picker" target="_blank">أداة اختيار الألوان</a> لاختيار اللون المفضل.');
 define('geideaSettingsPartnerId', 'هوية الشريك');
@@ -34,3 +33,11 @@ define('geideaRefundNotCompletedOrderError', 'فشل في الاسترداد! ي
 define('geideaRefundInvalidAmountError', 'فشل في الاسترداد! يمكنك فقط استرداد المبلغ بالكامل!');
 define('geideaRefundTransactionError', 'خطأ في العملية: s%');
 define('geideaRefundIncorrectStatus', 'فشل في استرداد الأموال: حالة الطلب غير صحيحة!');
+define('geideaOrderNotFound', 'لم يتم العثور على الطلب');
+define('geideaEmptyRequest', 'الطلب فارغ');
+define('geideaFileUploadingError', 'حدث خطأ ما أثناء تحميل الملف');
+define('geideaWrongFileType', 'نوع الملف خاطئ');
+define('geideaMerchantLogoDescription', 'يتم عرضه في نموذج جيديا. أنواع الملفات المسموح بها: jpg، jpeg، png، svg');
+define('geideaCheckoutIconDescription', 'يتم عرضه في صفحة الدفع. أنواع الملفات المسموح بها: jpg، jpeg، png، svg');
+define('geideaCheckoutIcon', 'رمز الدفع');
+define('geideaMerchantLogo', 'شعار التاجر');
