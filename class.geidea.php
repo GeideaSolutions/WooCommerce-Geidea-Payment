@@ -38,6 +38,8 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
         require_once 'includes/GIFunctions.php';
         require_once 'includes/GITable.php';
 
+        $this->config = require 'config.php';
+
         $this->functions = new \Geidea\Includes\GIFunctions();
 
         $this->method_title = geideaTitle;
@@ -68,8 +70,6 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
 
         $this->tokenise_param = "wc-{$this->id}-new-payment-method";
         $this->token_id_param = "wc-{$this->id}-payment-token";
-
-        $this->config = require 'config.php';
 
         if (version_compare(WOOCOMMERCE_VERSION, '2.0.0', '>=')) {
             add_action('woocommerce_update_options_payment_gateways_' . $this->id, array(&$this, 'process_admin_options'));
@@ -305,15 +305,25 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
         die();
     }
 
-    public function add_card_tokens_menu()
+    public static function add_card_tokens_menu()
     {
+        require_once 'includes/GITable.php';
+
+        $lang = get_bloginfo('language');
+
+        if ($lang == "ar") {
+            include_once 'lang/settings.ar.php';
+        } else {
+            include_once 'lang/settings.en.php';
+        }
+
         add_submenu_page(
             'woocommerce',
             geideaTokensTitle,
             geideaTokensTitle,
             'manage_woocommerce',
             'card_tokens',
-            array($this, 'tokens_table'),
+            array('WC_Gateway_Geidea', 'tokens_table'),
             3
         );
     }
@@ -385,14 +395,6 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
             $this->errors = array_merge($this->errors, $upload_errors);
         }
 
-        $san_merchant_gateway_key = sanitize_text_field($this->settings['merchant_gateway_key']);
-        $san_merchant_password = sanitize_text_field($this->settings['merchant_password']);
-        if (empty($san_merchant_gateway_key)) {
-            $this->errors[] = sprintf(geideaErrorRequired, geideaSettingsMerchant);
-        }
-        if (empty($san_merchant_password)) {
-            $this->errors[] = sprintf(geideaErrorRequired, geideaSettingsPassword);
-        }
         if (!empty($this->errors)) {
             $this->enabled = false;
             $this->settings['enabled'] = 'no';
@@ -402,6 +404,45 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
             }
         }
         $this->settings['return_url'] = 'yes';
+
+        $are_valid_credentials = false;
+        $merchant_config = [];
+        if (!empty($this->settings['merchant_gateway_key'])) {
+            $result = $this->get_merchant_config($this->settings['merchant_gateway_key'], $this->settings['merchant_password']);
+
+            if ($result['errors']) {
+                $are_valid_credentials = false;
+            } else {
+                $are_valid_credentials = true;
+                $merchant_config = $result['config'];
+
+                $this->settings['available_currencies'] = implode(',', $merchant_config['currencies']);
+
+                $availablePaymentMethods = [];
+                foreach ($merchant_config['paymentMethods'] as $paymentMethod) {
+                    $availablePaymentMethods[] = $paymentMethod;
+                }
+    
+                if ($merchant_config['applePay']['isApplePayWebEnabled'] == true) {
+                    $availablePaymentMethods[] = 'applepay';
+                }
+
+                $this->settings['avaliable_payment_methods'] = implode(',', $availablePaymentMethods);
+            }
+        }
+        
+        if (!$are_valid_credentials) {
+            $this->settings['valid_creds'] = false;
+            if (!empty($this->settings['merchant_gateway_key'])) {
+                WC_Admin_Settings::add_error(geideaInvalidCredentials);
+            }
+        } else {
+            $this->settings['valid_creds'] = true;
+        }
+
+        if ($this->settings['needs_setup'] == 'true') {
+            $this->settings['needs_setup'] = 'false';
+        }
 
         return update_option($this->get_option_key(), apply_filters('woocommerce_settings_api_sanitized_fields_' . $this->id, $this->settings), 'yes');
     }
@@ -452,6 +493,12 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
         $result_fields['headerColor'] = $this->get_option('header_color');
         $result_fields['cardOnFile'] = $save_card;
         $result_fields['customerEmail'] = sanitize_text_field($order->get_billing_email());
+
+        $result_fields['customerPhoneNumber'] = $order->get_billing_phone();
+        if ($result_fields['customerPhoneNumber'][0] != '+') {
+            $result_fields['customerPhoneNumber'] = '+'. $result_fields['customerPhoneNumber'];
+        }
+
         $result_fields['billingAddress'] = json_encode($this->get_formatted_billing_address($order));
         $result_fields['shippingAddress'] = json_encode($this->get_formatted_shipping_address($order));
 
@@ -494,6 +541,9 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
      */
     public function init_form_fields()
     {
+        wp_register_style('geidea', plugins_url('assets/css/gi-styles.css', __FILE__));
+        wp_enqueue_style('geidea');
+
         $statuses = wc_get_order_statuses();
 
         $options = get_option('woocommerce_' . $this->id . '_settings');
@@ -514,6 +564,25 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
         }
         $checkoutIconDescr .= '</br><img src="' . esc_html($checkoutIcon) . '" width="70"></br>'; 
 
+        $available_currencies = explode(",", $options['available_currencies']);
+        $currency_options = ['' => ''];
+        foreach ($available_currencies as $currency) {
+            $currency_options[$currency] = $this->config['currenciesMapping'][$currency];
+        }
+
+        $availablePaymentMethods = [];
+        foreach (explode(",", $options['avaliable_payment_methods']) as $paymentMethod) {
+            $availablePaymentMethods[] = $this->config['paymentMethodsMapping'][$paymentMethod];
+        }
+
+        $disable_extra_fields = !$options['valid_creds'];
+
+        if ($availablePaymentMethods) {
+            $default_title = implode(", ", $availablePaymentMethods);
+        } else {
+            $default_title = geideaAvailablePaymentMethodsByDefault;
+        }
+
         $this->form_fields = array(
             'enabled' => array(
                 'title' => geideaSettingsActive,
@@ -521,80 +590,119 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
                 'label' => ' ',
                 'default' => 'no',
             ),
-            'title' => array(
-                'title' => geideaSettingsName,
-                'type' => 'text',
-                'default' => geideaTitle,
-            ),
-            'description' => array(
-                'title' => geideaSettingsDesc,
-                'type' => 'textarea',
-                'description' => '',
-                'default' => geideaTitleDesc,
-            ),
             'merchant_gateway_key' => array(
                 'title' => geideaSettingsMerchant . ' *',
                 'type' => 'text',
-                'description' => geideaSettingsMerchantDesc,
+                'description' => '<p class="geidea-error-message">'.geideaInvalidCredentials.'</p>',
                 'default' => '',
+                'class' => 'geidea-merchant-gateway-key'
             ),
             'merchant_password' => array(
                 'title' => geideaSettingsPassword . ' *',
                 'type' => 'text',
                 'description' => '',
                 'default' => '',
+                'class' => 'geidea-merchant-password'
+            ),
+            'title' => array(
+                'title' => geideaSettingsName,
+                'type' => 'text',
+                'default' => $default_title, 
+                'class' => 'geidea-extra-field',
+                'description' => sprintf(geideaForExample, $default_title),
+                'disabled' => $disable_extra_fields
+            ),
+            'description' => array(
+                'title' => geideaSettingsDesc,
+                'type' => 'textarea',
+                'description' => geideaDescriptionHint,
+                'default' => geideaTitleDesc,
+                'class' => 'geidea-extra-field',
+                'disabled' => $disable_extra_fields
             ),
             'currency_id' => array(
                 'title' => geideaSettingsCurrency . ' *',
                 'type' => 'select',
-                'options' => [
-                    'USD' => "US Dollar",
-                    'SAR' => "Saudi Riyal",
-                    'EGP' => "Egyptian Pound",
-                ],
-                'default' => 'SAR',
+                'options' => $currency_options,
+                'default' => '',
+                'class' => 'geidea-extra-field',
+                'disabled' => $disable_extra_fields			   
             ),
             'checkout_icon' => array(
                 'title' => geideaCheckoutIcon,
                 'type' => 'file',
                 'description' => $checkoutIconDescr,
                 'default' => '',
+                'class' => 'geidea-extra-field',
+                'disabled' => $disable_extra_fields
             ),
             'logo' => array(
                 'title' => geideaMerchantLogo,
                 'type' => 'file',
                 'description' => $merchantLogoDescr,
                 'default' => '',
+                'class' => 'geidea-extra-field',
+                'disabled' => $disable_extra_fields
             ),
             'header_color' => array(
                 'title' => geideaSettingsHeaderColor,
                 'type' => 'text',
                 'description' => geideaSettingsHeaderColorDesc,
                 'default' => '',
+                'class' => 'geidea-extra-field',
+                'disabled' => $disable_extra_fields
             ),
             'partner_id' => array(
                 'title' => geideaSettingsPartnerId,
                 'type' => 'text',
                 'description' => '',
                 'default' => '',
+                'class' => 'geidea-extra-field',
+                'disabled' => $disable_extra_fields
             ),
             'receipt_enabled' => array(
                 'title' => geideaSettingsReceiptEnabled,
                 'type' => 'checkbox',
                 'label' => ' ',
                 'default' => 'no',
+                'class' => 'geidea-extra-field',
+                'disabled' => $disable_extra_fields
             ),
-            'order_status_sucess' => array(
+            'order_status_success' => array(
                 'title' => geideaSettingsOrderStatusSuccess,
                 'type' => 'select',
                 'options' => $statuses,
                 'default' => 'wc-processing',
+                'class' => 'geidea-extra-field',
+                'disabled' => $disable_extra_fields
             ),
             'order_status_waiting' => array(
                 'title' => geideaSettingsOrderStatusWaiting,
                 'type' => 'select',
                 'options' => $statuses,
                 'default' => 'wc-pending',
+                'class' => 'geidea-extra-field',
+                'disabled' => $disable_extra_fields
+            ),
+            'needs_setup' => array(
+                'type' => 'hidden',
+                'default' => 'true',
+                'class' => 'geidea-extra-field-hidden'
+            ),
+            'valid_creds' => array(
+                'type' => 'hidden',
+                'default' => 'false',
+                'class' => 'geidea-extra-field-hidden'
+            ),
+            'available_currencies' => array(
+                'type' => 'hidden',
+                'default' => '',
+                'class' => 'geidea-extra-field-hidden'
+            ),
+            'avaliable_payment_methods' => array(
+                'type' => 'hidden',
+                'default' => '',
+                'class' => 'geidea-extra-field-hidden'
             ),
         );
     }
@@ -627,8 +735,8 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
         if (isset($options['currency_default'])) {
             $settings['currencyDefault'] = $options['currency_default'];
         }
-        if (isset($options['order_status_sucess'])) {
-            $settings['orderStatusSuccess'] = $options['order_status_sucess'];
+        if (isset($options['order_status_success'])) {
+            $settings['orderStatusSuccess'] = $options['order_status_success'];
         }
         if (isset($options['order_status_waiting'])) {
             $settings['orderStatusWaiting'] = $options['order_status_waiting'];
@@ -644,19 +752,143 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
         $result = WC_Payment_Tokens::delete((int) $token_id);
     }
 
+    /*
+     * Returns array with merchant config and errors if they occured
+     */
+    private function get_merchant_config($merchant_key, $password = '')
+    {
+        $errors = [];
+        $config = [];
+
+        $response = $this->functions->send_gi_request(
+            $this->config['merchantConfigUrl'] . '/' . $merchant_key,
+            $merchant_key,
+            $password,
+            [],
+            'GET'
+        );
+
+        if ($response instanceof WP_Error) {
+            $error = $response->get_error_message();
+            $errors[] = $error;
+            
+            return [
+                'config' => $config,
+                'errors' => $errors
+            ];
+        }
+
+        $decoded_response = json_decode($response["body"], true);
+
+        if (!empty($decoded_response["errors"])) {
+            foreach ($decoded_response["errors"] as $k => $v) {
+                foreach ($v as $error) {
+                    $errors[] = $error;
+                }
+            }
+        }
+
+        if (isset($decoded_response["detailedResponseMessage"])) {
+            if ($decoded_response["responseMessage"] != 'Success') {
+                $errors[] = $decoded_response["detailedResponseMessage"];
+            } else {
+                $config = $decoded_response;
+            }
+        }
+
+        return [
+            'config' => $config,
+            'errors' => $errors
+        ];
+    }
+
     /**
      * Admin Panel Options
      * The output html form - settings to the admin panel
      * */
     public function admin_options()
     {
+        wp_register_script('geidea-admin-script', plugins_url('assets/js/admin-script.js', __FILE__));
+        wp_enqueue_script('geidea-admin-script');
+
+        $options = get_option('woocommerce_' . $this->id . '_settings');
+        $settings = [];
+        $settings['needs_setup'] = true;
+        if (isset($options['needs_setup'])) {
+            $settings['needs_setup'] = filter_var($options['needs_setup'], FILTER_VALIDATE_BOOLEAN);
+        }
+
+        $settings['valid_creds'] = false;
+        if (isset($options['valid_creds'])) {
+            $settings['valid_creds'] = filter_var($options['valid_creds'], FILTER_VALIDATE_BOOLEAN);
+        }
+
+        $are_valid_credentials = $settings['valid_creds'];
+
+        $merchant_config = [];
+        if ($settings['needs_setup'] == true) {
+            if (!empty($options['merchant_gateway_key'])) {
+                $result = $this->get_merchant_config(
+                    $options['merchant_gateway_key'],
+                    $options['merchant_password']
+                );
+
+                if ($result['errors']) {
+                    $are_valid_credentials = false;
+                } else {
+                    $are_valid_credentials = true;
+                    $merchant_config = $result['config'];
+                }
+            }
+        }
+
+        if (!$are_valid_credentials) {?>
+            <script>
+                 jQuery(function($) {
+                    if ($("#woocommerce_geidea_merchant_gateway_key").val()){
+                        $('.geidea-error-message').each(function(i, obj) {
+                            obj.style.display = "block";
+                        });
+
+                        $("#woocommerce_geidea_merchant_gateway_key").addClass('geidea-invalid-field');
+                    }
+                 })
+            </script>
+        <?}
         ?>
-        <h3><?php echo geideaTitle ?></h3>
+        <h1><?php echo geideaTitle ?></h1>
+        <p><em><?php echo geideaEditableFieldsHint ?></em></p>
         <table class="form-table">
         <?php
-        //Generate the HTML For the settings form.
+        //Generate the HTML for the settings form.
         $form_fields = $this->get_form_fields();
 
+        if ($are_valid_credentials && $settings['needs_setup']) {
+            $currency_options = [];
+            foreach ($merchant_config['currencies'] as $currency) {
+                $currency_options[$currency] = $this->config['currenciesMapping'][$currency];
+            }
+
+            $form_fields['currency_id']['options'] = $currency_options;
+
+            $availablePaymentMethods = [];
+            foreach ($merchant_config['paymentMethods'] as $paymentMethod) {
+                $availablePaymentMethods[] = $this->config['paymentMethodsMapping'][$paymentMethod];
+            }
+
+            if ($merchant_config['applePay']['isApplePayWebEnabled'] == true) {
+                $availablePaymentMethods[] = $this->config['paymentMethodsMapping']['applepay'];
+            }
+
+            if ($availablePaymentMethods) {
+                $default_title = implode(", ", $availablePaymentMethods);
+            } else {
+                $default_title = geideaAvailablePaymentMethodsByDefault;
+            }
+            
+            $form_fields['title']['description'] = sprintf(geideaForExample, $default_title);
+        }
+        
         $this->generate_settings_html($form_fields, true);
         ?>
         </table>

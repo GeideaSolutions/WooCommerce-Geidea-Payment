@@ -41,3 +41,8 @@ define('geideaMerchantLogoDescription', 'يتم عرضه في نموذج جيد�
 define('geideaCheckoutIconDescription', 'يتم عرضه في صفحة الدفع. أنواع الملفات المسموح بها: jpg، jpeg، png، svg');
 define('geideaCheckoutIcon', 'رمز الدفع');
 define('geideaMerchantLogo', 'شعار التاجر');
+define('geideaInvalidCredentials', 'بيانات الاعتماد الخاصة بك غير صحيحة!');
+define('geideaForExample', 'على سبيل المثال: %s');
+define('geideaAvailablePaymentMethodsByDefault', 'فيزا, ماستركارد');
+define('geideaEditableFieldsHint', 'ستصبح الحقول الأخرى قابلة للتعديل بعد إدخال مفتاح التاجر وكلمة المرور');
+define('geideaDescriptionHint', 'على سبيل المثال: مقدمة من جيديا ®');

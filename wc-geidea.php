@@ -50,8 +50,7 @@ function GeideaAddGateway($methods)
 
 function add_card_tokens_menu()
 {
-    $plugin = new WC_Gateway_Geidea();
-    $plugin->add_card_tokens_menu();
+    WC_Gateway_Geidea::add_card_tokens_menu();
 }
 
 /*
