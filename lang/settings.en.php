@@ -8,7 +8,7 @@ define('geideaSettingsName', 'Name');
 define('geideaSettingsDesc', 'Description');
 define('geideaSettingsMerchant', 'Merchant gateway key');
 define('geideaSettingsMerchantDesc', 'Merchant gateway key.');
-define('geideaSettingsPassword', 'Merchant password.');
+define('geideaSettingsPassword', 'Merchant password');
 define('geideaSettingsCurrency', 'Default currency');
 define('geideaSettingsCurrencyDefault', 'Always use the default currency');
 define('geideaSettingsCurrencyDefaultDesc', 'In all currencies on the site, payment will always go for the default currency');
@@ -41,3 +41,8 @@ define('geideaMerchantLogoDescription', 'Displays on Geidea modal form. Allowed 
 define('geideaCheckoutIconDescription', 'Displays on checkout page. Allowed file types: jpg, jpeg, png, svg');
 define('geideaCheckoutIcon', 'Checkout icon');
 define('geideaMerchantLogo', 'Merchant logo');
+define('geideaInvalidCredentials', 'Your credentials are invalid!');
+define('geideaForExample', 'For example: %s');
+define('geideaAvailablePaymentMethodsByDefault', 'VISA, MasterCard');
+define('geideaEditableFieldsHint', 'The other fields will become editable after you enter your merchant key and password');
+define('geideaDescriptionHint', 'For example: Provided by Geidea ®');
