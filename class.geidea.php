@@ -173,7 +173,7 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
 
                     var onError = function(error) {
                         jQuery('#place_order').removeAttr('disabled');
-                        alert(<? echo geideaPaymentGatewayError; ?> + error.responseMessage);
+                        alert(<?php echo geideaPaymentGatewayError; ?> + error.responseMessage);
                     }
 
                     var onCancel = function() {
@@ -190,8 +190,11 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
                         cardOnFile: Boolean(data.cardOnFile),
                         initiatedBy: "Internet",
                         customerEmail: data.customerEmail,
-                        billingAddress: data.billingAddress,
-                        shippingAddress: data.shippingAddress,
+                        address: {
+                            showAddress: false,
+                            billing: data.billingAddress,
+                            shipping: data.shippingAddress
+                        },
                         merchantLogoUrl: data.merchantLogoUrl,
                         language: data.language,
                         styles: { "headerColor": data.headerColor },
@@ -854,7 +857,7 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
                     }
                  })
             </script>
-        <?}
+        <?php }
         ?>
         <h1><?php echo geideaTitle ?></h1>
         <p><em><?php echo geideaEditableFieldsHint ?></em></p>
@@ -932,7 +935,9 @@ render_tokens_table();
         $billing_street = $order->get_billing_address_1();
         $billing_street .= " " . $order->get_billing_address_2();
         $formatted_address = [
-            'country' => sanitize_text_field($order->get_billing_country()),
+            'country' => sanitize_text_field(
+                $this->functions->convert_country_code($order->get_billing_country())
+            ),
             'street' => sanitize_text_field($billing_street),
             'city' => sanitize_text_field($order->get_billing_city()),
             'postcode' => sanitize_text_field($order->get_billing_postcode()),
@@ -946,7 +951,9 @@ render_tokens_table();
         $shipping_street = $order->get_shipping_address_1();
         $shipping_street .= " " . $order->get_shipping_address_2();
         $formatted_address = [
-            'country' => sanitize_text_field($order->get_shipping_country()),
+            'country' => sanitize_text_field(
+                $this->functions->convert_country_code($order->get_shipping_country())
+            ),
             'street' => sanitize_text_field($shipping_street),
             'city' => sanitize_text_field($order->get_shipping_city()),
             'postcode' => sanitize_text_field($order->get_shipping_postcode()),
