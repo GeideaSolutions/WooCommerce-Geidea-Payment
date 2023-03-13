@@ -44,8 +44,11 @@ function initGIPaymentOnCheckoutPage(data) {
             email: data.customerEmail,
             showPhone: true,
             customerPhoneNumber: data.customerPhoneNumber,
-            billingAddress: billingAddress,
-            shippingAddress: shippingAddress,
+            address: {
+                showAddress: false,
+                billing: billingAddress,
+                shipping: shippingAddress
+            },
             merchantLogoUrl: data.merchantLogoUrl,
             language: data.language,
             styles: { "headerColor": data.headerColor },
