@@ -12,7 +12,7 @@ require ABSPATH . 'wp-includes/version.php';
  *
  * @class       WC_Geidea
  * @extends     WC_Payment_Gateway
- * @version     1.3.1
+ * @version     1.3.2
  * @author      Geidea
  */
 
@@ -81,17 +81,17 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
         add_action('wp_footer', array($this, 'checkout_js_order_handler'));
 
         add_action('wp_enqueue_scripts', array($this, 'add_scroll_script'));
- 
+
         if (!empty($_GET['wc-api']) && $_GET['wc-api'] == 'geidea') {
             do_action('woocommerce_api_wc_' . $this->id);
         }
     }
 
     public function add_scroll_script() {
-        if (is_checkout() && !is_wc_endpoint_url()) {  
+        if (is_checkout() && !is_wc_endpoint_url()) {
             wp_register_style('geidea', plugins_url('assets/css/gi-styles.css', __FILE__));
             wp_enqueue_style('geidea');
-      
+
             wp_register_script('geidea', plugins_url('assets/js/script.js', __FILE__));
             wp_enqueue_script('geidea');
 
@@ -333,7 +333,7 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
 
     /**
      * Return errors if occured
-     * 
+     *
      * @return array
      */
     function upload_logo($logo, $field) {
@@ -425,7 +425,7 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
                 foreach ($merchant_config['paymentMethods'] as $paymentMethod) {
                     $availablePaymentMethods[] = $paymentMethod;
                 }
-    
+
                 if ($merchant_config['applePay']['isApplePayWebEnabled'] == true) {
                     $availablePaymentMethods[] = 'applepay';
                 }
@@ -433,7 +433,7 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
                 $this->settings['avaliable_payment_methods'] = implode(',', $availablePaymentMethods);
             }
         }
-        
+
         if (!$are_valid_credentials) {
             $this->settings['valid_creds'] = false;
             if (!empty($this->settings['merchant_gateway_key'])) {
@@ -565,7 +565,7 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
             $checkoutIcon = plugins_url('assets/imgs/geidea-logo.svg', __FILE__);
 
         }
-        $checkoutIconDescr .= '</br><img src="' . esc_html($checkoutIcon) . '" width="70"></br>'; 
+        $checkoutIconDescr .= '</br><img src="' . esc_html($checkoutIcon) . '" width="70"></br>';
 
         $available_currencies = explode(",", $options['available_currencies']);
         $currency_options = ['' => ''];
@@ -610,7 +610,7 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
             'title' => array(
                 'title' => geideaSettingsName,
                 'type' => 'text',
-                'default' => $default_title, 
+                'default' => $default_title,
                 'class' => 'geidea-extra-field',
                 'description' => sprintf(geideaForExample, $default_title),
                 'disabled' => $disable_extra_fields
@@ -629,7 +629,7 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
                 'options' => $currency_options,
                 'default' => '',
                 'class' => 'geidea-extra-field',
-                'disabled' => $disable_extra_fields			   
+                'disabled' => $disable_extra_fields
             ),
             'checkout_icon' => array(
                 'title' => geideaCheckoutIcon,
@@ -774,7 +774,7 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
         if ($response instanceof WP_Error) {
             $error = $response->get_error_message();
             $errors[] = $error;
-            
+
             return [
                 'config' => $config,
                 'errors' => $errors
@@ -888,10 +888,10 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
             } else {
                 $default_title = geideaAvailablePaymentMethodsByDefault;
             }
-            
+
             $form_fields['title']['description'] = sprintf(geideaForExample, $default_title);
         }
-        
+
         $this->generate_settings_html($form_fields, true);
         ?>
         </table>
@@ -990,7 +990,7 @@ render_tokens_table();
 		);
 
         return apply_filters( 'woocommerce_payment_gateway_get_saved_payment_method_option_html', $html, $token, $this );
-    } 
+    }
 
     private function get_token()
     {
@@ -1053,9 +1053,9 @@ render_tokens_table();
         $password = $this->get_option('merchant_password');
 
         $result = $this->functions->send_gi_request(
-            $this->config['payByTokenUrl'], 
-            $merchantKey, 
-            $password, 
+            $this->config['payByTokenUrl'],
+            $merchantKey,
+            $password,
             $params
         );
 
