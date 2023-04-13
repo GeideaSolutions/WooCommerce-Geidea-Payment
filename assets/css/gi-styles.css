@@ -1,17 +1,7 @@
-#gi_payment_errors {
-    display: none;
-    color: #f10a0a;
-}
-
 .scrollDisabled {
     position: fixed;
     margin-top: 0;
     width: 100%;
-}
-
-.geidea-invalid-field {
-    border-color: #f10404 !important;
-    box-shadow: 0 0 0 1px #f10404 !important;
 }
 
 .geidea-error-message {

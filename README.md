@@ -5,7 +5,7 @@ The Geidea Payment Gateway plugin for WooCommerce 3.4.6+ enables you to accept p
 ## Support
 
 For any issues or enhancement requests on this plugin, kindly raise them with Geidea's support team.
-When raising an enhancement or support request, kindly share your merchant ID, Wordpress version and WooCommerce plugin version to help us serve you faster.
+When raising an enhancement or support request, kindly share your merchant ID, WordPress version and WooCommerce plugin version to help us serve you faster.
 
 ## Getting Started
 * To be able to use the Geidea Payment Gateway plugin, you will your merchant credentials (*Public Key* and *API password*).
@@ -19,9 +19,9 @@ Your API password is a secret key! It is important to never expose your API pass
 ## Installation
 #### Pre-requisites
 
-* Wordpress 5.7.0 or greater
+* WordPress 6.0.2 or greater
 * WooCommerce 3.4.6 or greater
-* PHP version 7.2 or greater
+* PHP version 7.4.3 or greater
 
 #### Get ready to take payments to your WooCommerce store!
-Kindly follow theses [instructions](https://docs.geidea.net/docs/woocommerce-plugin) for the plugin installation.
+Kindly follow these [instructions](https://docs.geidea.net/docs/woocommerce-plugin) for the plugin installation.

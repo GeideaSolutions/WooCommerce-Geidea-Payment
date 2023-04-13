@@ -1,12 +1,12 @@
 === Geidea Online Payments for WooCommerce ===
 
 Contributors: geideapg123
-Version: 1.3.2
-Tags: credit card, geidea, apple pay, payment, payment for wordpress, payment for woocommerce, payment request, woocommerce
-Requires at least: 5.6.2
-Tested up to: 6.1.1
-Requires PHP: 7.2
-Stable tag: 1.3.2
+Version: 2.0.0
+Tags: credit card, geidea, Apple Pay, payment, payment for WordPress, payment for woocommerce, payment request, woocommerce
+Requires Wordpress: 6.0.2
+Tested Wordpress up to: 6.2.0
+Requires PHP: 7.4
+Stable tag: 2.0.0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -84,19 +84,19 @@ If you would like to report a security issue, please [send us a mail to] (suppor
 
 = Sign me up! =
 Start accepting online payments today and benefit from free updates as Geidea launches new features and products.
-Register for a Geidea account to setup the Geidea payment gateway plugin
+Register for a Geidea account to set up the Geidea payment gateway plugin
 
 
 
 == Upgrade Notice ==
-Before running any update make sure to backup your website!
+Before running any update make sure to back up your website!
 
 == Changelog ==
 
 = 1.0.0 - 2021-06-01 =
 
 = 1.0.1 - 2021-06-17 =
-* Add - Updated instalalation guide.
+* Add - Updated installation guide.
 
 = 1.0.2 - 2021-06-21 =
 * Fix - Added check for file extension in custom logo field.
@@ -164,3 +164,12 @@ Before running any update make sure to backup your website!
 
 = 1.3.2 - 2023-03-27 =
 * Fix - Fixed sending platform attributes to gateway, readme.txt and README.MD.
+
+= 2.0.0 - 2023-04-13 =
+* Enhancement - Added additional options for customizing the payment widget
+* Enhancement - Implemented the payment widget with enhanced security using session tokens and embedded checkout
+* Fix - Fixed saving card as tokens to WooCommerce
+* Fix - Fixed payments with tokens
+* Fix - Fixed refund and partial refund operations through WooCommerce
+* Fix - Restructured code into multiple files based on capabilities
+* Fix - Fixed all sniffs highlighted by WordPress code sniffer
