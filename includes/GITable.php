@@ -22,7 +22,7 @@ class Tokens_Table extends WP_List_Table
 
     public function admin_header()
     {
-        $page = (isset($_GET['page'])) ? sanitize_key($_GET['page']) : false;
+        $page = (wp_verify_nonce(sanitize_text_field(wp_unslash(isset($_GET['page']))))) ? sanitize_key($_GET['page']) : false;
         return;
     }
 
@@ -66,9 +66,9 @@ class Tokens_Table extends WP_List_Table
 
     public function usort_reorder($a, $b)
     {
-        $orderby = (!empty($_GET['orderby'])) ? sanitize_key($_GET['orderby']) : 'ccard';
+        $orderby = (wp_verify_nonce(sanitize_text_field(wp_unslash(isset($_GET['orderby']))))) ? sanitize_key($_GET['orderby']) : 'ccard';
 
-        $order = (!empty($_GET['order'])) ? sanitize_key($_GET['order']) : 'asc';
+        $order = (wp_verify_nonce(sanitize_text_field(wp_unslash(isset($_GET['order']))))) ? sanitize_key($_GET['order']) : 'asc';
 
         $result = strcmp($a[$orderby], $b[$orderby]);
 
@@ -77,10 +77,10 @@ class Tokens_Table extends WP_List_Table
 
     public function column_ccard($item)
     {
-        $uri_parts = explode('?', $_SERVER['REQUEST_URI'], 2);
+        $uri_parts = isset($_SERVER['REQUEST_URI']) ?? explode('?', wp_verify_nonce(sanitize_text_field(wp_unslash($_SERVER['REQUEST_URI']))), 2);
 
         $result_url = $uri_parts[0] . "?";
-        foreach ($_GET as $k => $v) {
+        foreach ((wp_verify_nonce(sanitize_text_field(wp_unslash(isset($_GET))))) as $k => $v) {
             $k = sanitize_key($k);
             $v = sanitize_key($v);
 
@@ -90,10 +90,12 @@ class Tokens_Table extends WP_List_Table
         }
         $result_url = rtrim($result_url, "&");
 
-        $actions = array(
-            'delete' => sprintf('<a href="%s&action=%s&token=%s">Delete</a>', $result_url, 'delete', $item['ID']),
-        );
-
+        $actions = null;
+        if (isset($_REQUEST['page'])) {
+            $actions = array(
+                'delete' => sprintf('<a href="?page=%s&action=%s&id=%s">Delete</a>', esc_attr(sanitize_text_field(wp_unslash($_REQUEST['page']))), 'delete', absint($item['ID'])),
+            );
+        }
         return sprintf('%1$s %2$s', $item['ccard'], $this->row_actions($actions));
     }
 
@@ -108,12 +110,26 @@ class Tokens_Table extends WP_List_Table
     public function column_cb($item)
     {
         return sprintf(
-            '<input type="checkbox" name="delete_token_%s" value="%s" />', $item['ID'], $item['ID']
+            '<input type="checkbox" name="delete_token_%s" value="%s" />',
+            $item['ID'],
+            $item['ID']
         );
     }
 
     public function prepare_items()
     {
+        $action = $this->current_action();
+        if ('delete' === $action && isset($_GET['id'])) {
+            $nonce = isset($_REQUEST['_wpnonce']) ? sanitize_text_field(wp_unslash($_REQUEST['_wpnonce'])) : '';
+            if (!empty($nonce) && !wp_verify_nonce($nonce, 'my_list_table_action')) {
+                wp_die('Nonce verification failed!');
+            }
+            $id = absint($_GET['id']);
+            WC_Payment_Tokens::delete($id);
+            wp_safe_redirect(remove_query_arg(array('action', 'id')));
+            exit;
+        }
+
         //TODO now get_tokens returns all of the tokens
         // may be better to make query to database with offset and limit
         // because we need only n-items(e.g. 10) on the page
