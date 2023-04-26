@@ -2,7 +2,7 @@
 return [
     "payByTokenUrl" => "https://api.merchant.geidea.net/pgw/api/v1/direct/pay/token",
     "refundUrl" => "https://api.merchant.geidea.net/pgw/api/v1/direct/refund",
-    "merchantConfigUrl" => "https://api.merchant.geidea.net/pgw/api/v1/config", 
+    "merchantConfigUrl" => "https://api.merchant.geidea.net/pgw/api/v1/config",
     "jsSdkUrl" => "https://www.merchant.geidea.net/hpp/geideaCheckout.min.js",
     "availableCurrencies" => [
         'SAR',

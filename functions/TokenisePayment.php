@@ -1,7 +1,11 @@
 <?php
+
+namespace Geidea\Functions;
+
+use Geidea\Includes\GeideaTokensTable;
+
 trait TokenisePayment
 {
-
     public function tokenise_payment($order, $token): bool
     {
         $params = [];
@@ -26,7 +30,7 @@ trait TokenisePayment
         $merchantKey = $this->get_option('merchant_gateway_key');
         $password = $this->get_option('merchant_password');
 
-        $result = $this->functions->send_gi_request(
+        $result = $this->send_gi_request(
             $this->config['payByTokenUrl'],
             $merchantKey,
             $password,
@@ -62,10 +66,10 @@ trait TokenisePayment
 
     public function save_token($token_id, $card_number, $expiry_date, $card_type, $user_id)
     {
-        WC_Payment_Tokens::get($token_id);
+        \WC_Payment_Tokens::get($token_id);
 
         $token_exists = false;
-        $all_tokens = WC_Payment_Tokens::get_customer_tokens($user_id, $this->id);
+        $all_tokens = \WC_Payment_Tokens::get_customer_tokens($user_id, $this->id);
 
         foreach ($all_tokens as $t) {
             if ($t->get_token() == $token_id) {
@@ -74,7 +78,7 @@ trait TokenisePayment
         }
 
         if (!$token_exists) {
-            $new_token = new WC_Payment_Token_CC();
+            $new_token = new \WC_Payment_Token_CC();
             $new_token->set_token($token_id); // Token comes from payment processor
             $new_token->set_gateway_id($this->id);
             $new_token->set_last4($card_number);
@@ -101,7 +105,7 @@ trait TokenisePayment
             return false;
         }
 
-        $token = WC_Payment_Tokens::get($token_id);
+        $token = \WC_Payment_Tokens::get($token_id);
 
         if ($token->get_user_id() !== get_current_user_id()) {
             return null;
@@ -133,11 +137,9 @@ trait TokenisePayment
 
 ?>
         <div class="wrap">
-            <h2><?php echo geideaTokensTitle ?></h2>
+            <h2><?php echo esc_html(geideaTokensTitle) ?></h2>
             <form method="post">
-                <?php
-                render_tokens_table();
-                ?>
+                <?php \WC_Gateway_Geidea::geidea_render_tokens_table(); ?>
             </form>
         </div>
 <?php
@@ -145,6 +147,14 @@ trait TokenisePayment
 
     private function delete_token($token_id)
     {
-        WC_Payment_Tokens::delete((int) $token_id);
+        \WC_Payment_Tokens::delete((int) $token_id);
+    }
+
+    public static function geidea_render_tokens_table()
+    {
+        global $tokensTable;
+        $tokensTable = new GeideaTokensTable();
+        $tokensTable->prepare_items();
+        $tokensTable->display();
     }
 }

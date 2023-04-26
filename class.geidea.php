@@ -7,48 +7,67 @@
  *
  * @class       WC_Geidea
  * @extends     WC_Payment_Gateway
- * @version     2.0.0
+ * @version     2.0.1
  * @author      Geidea
  */
 
-require_once 'functions/ProcessRefund.php';
-require_once 'functions/TokenisePayment.php';
-require_once 'functions/InitFormFields.php';
-require_once 'functions/ProcessPayment.php';
-require_once 'functions/PaymentComplete.php';
-require_once 'functions/AdminOptions.php';
-require_once 'functions/ReturnHandler.php';
+defined('ABSPATH') || exit;
+
 require_once 'functions/Address.php';
+require_once 'functions/AdminOptions.php';
+require_once 'functions/ApiHandler.php';
 require_once 'functions/Checkout.php';
 require_once 'functions/CardOptions.php';
+require_once 'functions/InitFormFields.php';
+require_once 'functions/PaymentComplete.php';
+require_once 'functions/ProcessPayment.php';
+require_once 'functions/ProcessRefund.php';
+require_once 'functions/ReturnHandler.php';
+require_once 'functions/TokenisePayment.php';
+require_once 'includes/GITable.php';
 require_once 'uninstall.php';
 
-use Geidea\Includes\GIFunctions;
-use JetBrains\PhpStorm\NoReturn;
+use Geidea\Functions\Address;
+use Geidea\Functions\AdminOptions;
+use Geidea\Functions\ApiHandler;
+use Geidea\Functions\Checkout;
+use Geidea\Functions\CardOptions;
+use Geidea\Functions\InitFormFields;
+use Geidea\Functions\PaymentComplete;
+use Geidea\Functions\ProcessPayment;
+use Geidea\Functions\ProcessRefund;
+use Geidea\Functions\ReturnHandler;
+use Geidea\Functions\TokenisePayment;
 
-if (!defined('ABSPATH')) {
-    exit;
-}
-
-class WC_Gateway_Geidea extends WC_Payment_Gateway
+class WC_Gateway_Geidea extends \WC_Payment_Gateway
 {
-    use ProcessRefund, TokenisePayment, InitFormFields, ProcessPayment, PaymentComplete, AdminOptions, ReturnHandler, Address, Checkout, CardOptions;
+    use Address;
+    use AdminOptions;
+    use ApiHandler;
+    use Checkout;
+    use CardOptions;
+    use InitFormFields;
+    use PaymentComplete;
+    use ProcessPayment;
+    use ProcessRefund;
+    use ReturnHandler;
+    use TokenisePayment;
 
     public static ?WC_Gateway_Geidea $instance = null;
 
     public function __construct()
     {
         $this->id = 'geidea';
+
+        // Working with non wp language translation
         $lang = get_bloginfo('language');
         if ($lang == "ar") {
             include_once 'lang/settings.ar.php';
         } else {
             include_once 'lang/settings.en.php';
         }
-        require_once 'includes/GIFunctions.php';
-        require_once 'includes/GITable.php';
+
         $this->config = require 'config.php';
-        $this->functions = new GIFunctions();
         $this->method_title = geideaTitle;
         $this->has_fields = true;
         $this->errors = [];
@@ -103,8 +122,6 @@ class WC_Gateway_Geidea extends WC_Payment_Gateway
 
     public static function add_card_tokens_menu()
     {
-        require_once 'includes/GITable.php';
-
         $lang = get_bloginfo('language');
 
         if ($lang == "ar") {

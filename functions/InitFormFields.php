@@ -1,4 +1,7 @@
 <?php
+
+namespace Geidea\Functions;
+
 trait InitFormFields
 {
     /**

@@ -3,7 +3,7 @@
 /*
 Plugin Name: Geidea Online Payments
 Description: Geidea Online Payments.
-Version: 2.0.0
+Version: 2.0.1
 Author: Geidea
 Author URI: https://geidea.net
 
@@ -22,11 +22,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
- */
+*/
 
-if (!defined('ABSPATH')) {
-    exit; // Exit if accessed directly
-}
+defined('ABSPATH') || exit;
 
 define('GEIDEA_DIR', plugin_dir_path(__FILE__));
 define('GEIDEA_ICONS_URL', plugins_url("assets/imgs/icons/", __FILE__));
@@ -42,13 +40,14 @@ add_action('plugins_loaded', 'woocommerce_geidea', 0);
 /**
  * Add the gateway to WooCommerce
  * */
-function GeideaAddGateway($methods)
+function geidea_add_gateway($methods)
 {
+    require_once GEIDEA_DIR . 'class.geidea.php';
     $methods[] = 'WC_Gateway_Geidea';
     return $methods;
 }
 
-function add_card_tokens_menu(): void
+function geidea_add_card_tokens_menu(): void
 {
     WC_Gateway_Geidea::add_card_tokens_menu();
 }
@@ -66,13 +65,17 @@ function woocommerce_geidea(): void
     if (class_exists('WC_Gateway_Geidea')) {
         return;
     }
-    require_once GEIDEA_DIR . 'class.geidea.php';
 
     if (class_exists('WooCommerce_Payment_Status')) {
-        add_filter('woocommerce_valid_order_statuses_for_payment', array('WC_Gateway_Geidea', 'valid_order_statuses_for_payment'), 52, 2);
+        add_filter(
+            'woocommerce_valid_order_statuses_for_payment',
+            array('WC_Gateway_Geidea', 'valid_order_statuses_for_payment'),
+            52,
+            2
+        );
     }
 
-    add_filter('woocommerce_payment_gateways', 'GeideaAddGateway');
+    add_filter('woocommerce_payment_gateways', 'geidea_add_gateway');
 
-    add_action('admin_menu', 'add_card_tokens_menu', 99);
+    add_action('admin_menu', 'geidea_add_card_tokens_menu', 99);
 }
