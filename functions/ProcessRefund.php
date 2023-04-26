@@ -1,4 +1,7 @@
 <?php
+
+namespace Geidea\Functions;
+
 trait ProcessRefund
 {
     /**
@@ -16,7 +19,7 @@ trait ProcessRefund
             $order->get_status() != $options['orderStatusSuccess']
             && $order->get_status() != $successStatus
         ) {
-            throw new Exception(geideaRefundNotCompletedOrderError);
+            throw new \Exception(geideaRefundNotCompletedOrderError);
         }
         $values = [];
         $values['orderId'] = $order->get_meta('Geidea Order Id');
@@ -25,7 +28,7 @@ trait ProcessRefund
         $values['refundAmount'] = floatval($amount);
         $merchantKey = $this->get_option('merchant_gateway_key');
         $password = $this->get_option('merchant_password');
-        $result = $this->functions->send_gi_request(
+        $result = $this->send_gi_request(
             $this->config['refundUrl'],
             $merchantKey,
             $password,
@@ -39,14 +42,14 @@ trait ProcessRefund
             $decoded_result = json_decode($result["body"], true);
         }
         if (!empty($decoded_result['errors'])) {
-            throw new Exception(geideaPaymentGatewayError);
+            throw new \Exception(geideaPaymentGatewayError);
         }
         if ($decoded_result['responseCode'] != '000') {
             $error_message = sprintf(geideaRefundTransactionError, $decoded_result['detailedResponseMessage']);
-            throw new Exception($error_message);
+            throw new \Exception($error_message);
         }
         if ($decoded_result['order']['detailedStatus'] != 'Refunded' && $decoded_result['order']['detailedStatus'] != 'PartiallyRefunded') {
-            throw new Exception(geideaRefundIncorrectStatus);
+            throw new \Exception(geideaRefundIncorrectStatus);
         }
         $transactions = $decoded_result['order']['transactions'];
         $refund_transaction = null;

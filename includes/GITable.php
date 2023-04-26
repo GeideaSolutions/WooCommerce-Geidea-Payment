@@ -1,14 +1,17 @@
 <?php
+
+namespace Geidea\Includes;
+
 if (!class_exists('WP_List_Table')) {
     require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
 }
 
-class Tokens_Table extends WP_List_Table
-{
+use WC_Payment_Tokens;
 
+class GeideaTokensTable extends \WP_List_Table
+{
     public function __construct()
     {
-
         global $status, $page;
 
         parent::__construct(array(
@@ -77,25 +80,9 @@ class Tokens_Table extends WP_List_Table
 
     public function column_ccard($item)
     {
-        $uri_parts = isset($_SERVER['REQUEST_URI']) ?? explode('?', wp_verify_nonce(sanitize_text_field(wp_unslash($_SERVER['REQUEST_URI']))), 2);
-
-        $result_url = $uri_parts[0] . "?";
-        foreach ((wp_verify_nonce(sanitize_text_field(wp_unslash(isset($_GET))))) as $k => $v) {
-            $k = sanitize_key($k);
-            $v = sanitize_key($v);
-
-            if ($k != 'token' && $k != 'action') {
-                $result_url .= $k . "=" . $v . "&";
-            }
-        }
-        $result_url = rtrim($result_url, "&");
-
-        $actions = null;
-        if (isset($_REQUEST['page'])) {
-            $actions = array(
-                'delete' => sprintf('<a href="?page=%s&action=%s&id=%s">Delete</a>', esc_attr(sanitize_text_field(wp_unslash($_REQUEST['page']))), 'delete', absint($item['ID'])),
-            );
-        }
+        $actions = array(
+            'delete' => sprintf('<a href="?page=%s&action=%s&id=%s">Delete</a>', esc_attr("card_tokens"), 'delete', absint($item['ID'])),
+        );
         return sprintf('%1$s %2$s', $item['ccard'], $this->row_actions($actions));
     }
 
@@ -174,12 +161,4 @@ class Tokens_Table extends WP_List_Table
 
         $this->items = $page_data;
     }
-}
-
-function render_tokens_table()
-{
-    global $tokensTable;
-    $tokensTable = new Tokens_Table();
-    $tokensTable->prepare_items();
-    $tokensTable->display();
 }

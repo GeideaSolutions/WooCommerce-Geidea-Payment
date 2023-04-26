@@ -1,7 +1,11 @@
 <?php
 
+namespace Geidea\Functions;
+
+use WC_Payment_Tokens;
+
 /**
- * 
+ * ProcessPayment
  */
 trait ProcessPayment
 {
@@ -172,7 +176,7 @@ trait ProcessPayment
                 $status = str_replace('wc-', '', $payment_obj->get_option('order_status_waiting'));
                 $order->update_status($status, $text);
 
-                echo json_encode($payment_data);
+                return json_encode($payment_data);
             } else {
                 $response = [
                     'result' => 'failure',
@@ -180,9 +184,8 @@ trait ProcessPayment
                     "refresh" => false,
                     "reload" => false,
                 ];
-                echo json_encode($response);
+                return json_encode($response);
             }
-            die();
         } else {
             $response = [
                 'result' => 'failure',
@@ -190,15 +193,14 @@ trait ProcessPayment
                 "refresh" => false,
                 "reload" => false,
             ];
-            echo json_encode($response);
+            return json_encode($response);
         }
-        die();
     }
 
     public function payment_fields()
     {
         if ($this->description) {
-            echo wpautop(wptexturize($this->description));
+            echo esc_attr($this->description);
         }
         $this->tokenization_script();
         $this->saved_payment_methods();

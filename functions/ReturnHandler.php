@@ -1,7 +1,9 @@
 <?php
 
+namespace Geidea\Functions;
+
 /**
- * 
+ * ReturnHandler
  */
 trait ReturnHandler
 {
@@ -15,7 +17,7 @@ trait ReturnHandler
             $result = json_decode($json_body, true);
 
             if ($result == null) {
-                echo "Invalid request!";
+                echo esc_html("Invalid request!");
                 http_response_code(400);
                 die();
             }
@@ -24,7 +26,7 @@ trait ReturnHandler
             $callback_signature = $result["signature"];
 
             if ($order["merchantReferenceId"] == null) {
-                echo "Order id is not defined!";
+                echo esc_html("Order id is not defined!");
                 http_response_code(400);
                 die();
             }
@@ -44,7 +46,7 @@ trait ReturnHandler
             $result_signature = base64_encode($hash);
 
             if ($result_signature != $callback_signature) {
-                echo "Invalid signature!";
+                echo esc_html("Invalid signature!");
                 http_response_code(400);
                 die();
             }
@@ -73,7 +75,7 @@ trait ReturnHandler
                 number_format($order_total, 2, '.', '') != $order["amount"] &&
                 (empty($wc_order->get_status()) || $wc_order->get_status() != 'failed')
             ) {
-                echo "Invalid order amount!";
+                echo esc_html("Invalid order amount!");
                 http_response_code(400);
                 die();
             }
@@ -102,7 +104,7 @@ trait ReturnHandler
                 // Remove cart
                 WC()->cart->empty_cart();
 
-                echo "Order is completed!";
+                echo esc_html("Order is completed!");
                 http_response_code(200);
                 die();
             } elseif (
@@ -127,15 +129,15 @@ trait ReturnHandler
 
                 $wc_order->update_status(apply_filters('woocommerce_payment_complete_order_status', 'failed', $wc_order->id));
 
-                echo "Payment failed!";
+                echo esc_html("Payment failed!");
                 http_response_code(200);
             } else {
-                echo "Not found!";
+                echo esc_html("Not found!");
                 http_response_code(404);
             }
             die();
         } catch (Exception $return_handler_exc) {
-            echo "Internal Server Error!";
+            echo esc_html("Internal Server Error!");
             echo esc_html($return_handler_exc);
             http_response_code(500);
             die();

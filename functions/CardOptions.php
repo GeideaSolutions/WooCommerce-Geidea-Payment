@@ -1,7 +1,11 @@
 <?php
 
+namespace Geidea\Functions;
+
+use WC_Payment_Tokens;
+
 /**
- * 
+ * Card Options
  */
 trait CardOptions
 {
@@ -22,10 +26,10 @@ trait CardOptions
 
         $html = sprintf(
             '<li class="woocommerce-SavedPaymentMethods-token">
-				<input id="wc-%1$s-payment-token-%2$s" type="radio" name="wc-%1$s-payment-token" value="%2$s" style="width:auto;" class="woocommerce-SavedPaymentMethods-tokenInput" %4$s />
+                <input id="wc-%1$s-payment-token-%2$s" type="radio" name="wc-%1$s-payment-token" value="%2$s" style="width:auto;" class="woocommerce-SavedPaymentMethods-tokenInput" %4$s />
                 <img class="gi-card-icon" src="%5$s" />
-				<label for="wc-%1$s-payment-token-%2$s">%3$s</label>
-			</li>',
+                <label for="wc-%1$s-payment-token-%2$s">%3$s</label>
+            </li>',
             esc_attr($this->id),
             esc_attr($token->get_id()),
             esc_html($token->get_display_name()),

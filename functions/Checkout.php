@@ -1,7 +1,9 @@
 <?php
 
+namespace Geidea\Functions;
+
 /**
- * 
+ * Checkout
  */
 trait Checkout
 {
@@ -42,7 +44,7 @@ trait Checkout
                                 enctype: 'multipart/form-data',
                                 data: {
                                     'action': 'ajax_order',
-                                    'fields': $('<?php echo json_encode($form_selector); ?>').serializeArray(),
+                                    'fields': $('<?php echo htmlspecialchars(json_encode($form_selector), ENT_QUOTES, 'UTF-8');  ?>').serializeArray(),
                                     'user_id': <?php echo esc_js(get_current_user_id()); ?>,
                                     'order_id': <?php echo esc_js($order_id); ?>,
                                 },
@@ -72,7 +74,7 @@ trait Checkout
 
                         let onError = function(error) {
                             jQuery('#place_order').removeAttr('disabled');
-                            alert(<?php echo geideaPaymentGatewayError; ?> + error.responseMessage);
+                            alert(<?php echo esc_html(geideaPaymentGatewayError); ?> + error.responseMessage);
                         }
 
                         let onCancel = function() {

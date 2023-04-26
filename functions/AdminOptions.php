@@ -1,7 +1,9 @@
 <?php
 
+namespace Geidea\Functions;
+
 /**
- * 
+ * Admin options
  */
 trait AdminOptions
 {
@@ -60,8 +62,8 @@ trait AdminOptions
             </script>
         <?php }
         ?>
-        <h1><?php echo geideaTitle ?></h1>
-        <p><em><?php echo geideaEditableFieldsHint ?></em></p>
+        <h1><?php echo esc_html(geideaTitle) ?></h1>
+        <p><em><?php echo esc_html(geideaEditableFieldsHint) ?></em></p>
         <table class="form-table">
             <?php
             //Generate the HTML for the settings form.
@@ -107,7 +109,7 @@ trait AdminOptions
         $errors = [];
         $config = [];
 
-        $response = $this->functions->send_gi_request(
+        $response = $this->send_gi_request(
             $this->config['merchantConfigUrl'] . '/' . $merchant_key,
             $merchant_key,
             $password,

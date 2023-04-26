@@ -1,7 +1,9 @@
 <?php
 
+namespace Geidea\Functions;
+
 /**
- * 
+ * PaymentComplete
  */
 trait PaymentComplete
 {
