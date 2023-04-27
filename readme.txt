@@ -174,5 +174,5 @@ Before running any update make sure to back up your website!
 * Fix - Restructured code into multiple files based on capabilities
 * Fix - Fixed all sniffs highlighted by WordPress code sniffer
 
-= 2.0.1 - 2023-04-?? =
+= 2.0.1 - 2023-04-26 =
 * Refactor the codebase
