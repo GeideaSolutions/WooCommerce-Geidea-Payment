@@ -34,7 +34,6 @@ trait ProcessPayment
                     return array('result' => 'fail');
                 }
             }
-            $save_card = $this->need_to_save_new_card($user_id);
         }
         $token_id = null;
         try {
@@ -44,6 +43,9 @@ trait ProcessPayment
                 if ($token) {
                     $token_id = $token->get_token();
                 }
+            }
+            if (isset($_POST['wc-geidea-new-payment-method']) && isset($_POST['woocommerce-process-checkout-nonce']) && wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['woocommerce-process-checkout-nonce'])), 'woocommerce-process_checkout')) {
+                $save_card = true;
             }
         } catch (Exception $e) {
             $token_id = null;
@@ -93,9 +95,8 @@ trait ProcessPayment
             $result_fields['merchantLogoUrl'] = str_replace('http://', 'https://', $logoUrl);
         }
 
-        $result_fields['createCustomer'] = $this->get_option('isCreateCustomerEnabled');
-        $result_fields['paymentMethod'] = $this->get_option('isSetPaymentMethodEnabled');
-        $result_fields['cardOnFile'] = $this->get_option('cardOnFile');
+        $result_fields['createCustomer'] = false;
+        $result_fields['paymentMethod'] = false;
         $result_fields['language'] = $lang;
         $result_fields['hppProfile'] = $this->get_option('hppprofile');
         $result_fields['integrationType'] = 'plugin';
@@ -204,6 +205,8 @@ trait ProcessPayment
         }
         $this->tokenization_script();
         $this->saved_payment_methods();
-        $this->save_payment_method_checkbox();
+        if ($this->get_option("cardOnFile") === 'yes') {
+            $this->save_payment_method_checkbox();
+        }
     }
 }

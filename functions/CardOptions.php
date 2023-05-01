@@ -2,8 +2,6 @@
 
 namespace Geidea\Functions;
 
-use WC_Payment_Tokens;
-
 /**
  * Card Options
  */
@@ -38,20 +36,5 @@ trait CardOptions
         );
 
         return apply_filters('woocommerce_payment_gateway_get_saved_payment_method_option_html', $html, $token, $this);
-    }
-
-    public function need_to_save_new_card($user_id): bool
-    {
-        $token_id = sanitize_key(wp_verify_nonce(sanitize_text_field(wp_unslash(isset($_POST[$this->token_id_param])))));
-        $save_token = sanitize_key(wp_verify_nonce(sanitize_text_field(wp_unslash(isset($_POST[$this->tokenise_param])))));
-
-        $all_tokens = WC_Payment_Tokens::get_customer_tokens($user_id, $this->id);
-
-        // if token is new or there are no tokens for this customer
-        if (($token_id === 'new' || !$all_tokens) && $save_token) {
-            return true;
-        } else {
-            return false;
-        }
     }
 }
