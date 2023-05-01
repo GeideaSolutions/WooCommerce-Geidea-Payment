@@ -176,22 +176,6 @@ trait InitFormFields
                 'class' => 'geidea-extra-field',
                 'disabled' => $disable_extra_fields,
             ),
-            'isCreateCustomerEnabled' => array(
-                'title' => geideaSettingsCreateCustomerEnabled,
-                'type' => 'checkbox',
-                'label' => ' ',
-                'default' => 'no',
-                'class' => 'geidea-extra-field',
-                'disabled' => $disable_extra_fields,
-            ),
-            'isSetPaymentMethodEnabled' => array(
-                'title' => geideaSettingsPaymentMethodEnabled,
-                'type' => 'checkbox',
-                'label' => ' ',
-                'default' => 'no',
-                'class' => 'geidea-extra-field',
-                'disabled' => $disable_extra_fields,
-            ),
             'cardOnFile' => array(
                 'title' => geideaSettingsCardOnFileEnabled,
                 'type' => 'checkbox',

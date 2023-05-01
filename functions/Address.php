@@ -12,12 +12,10 @@ trait Address
         $billing_street = $order->get_billing_address_1();
         $billing_street .= " " . $order->get_billing_address_2();
         return [
-            'country' => sanitize_text_field(
-                $this->convert_country_code($order->get_billing_country())
-            ),
-            'street' => sanitize_text_field($billing_street),
-            'city' => sanitize_text_field($order->get_billing_city()),
-            'postcode' => sanitize_text_field($order->get_billing_postcode()),
+            'country' => empty(sanitize_text_field($this->convert_country_code($order->get_billing_country()))) ? null : sanitize_text_field($this->convert_country_code($order->get_billing_country())),
+            'street' => empty(sanitize_text_field($billing_street)) ? null : sanitize_text_field($billing_street),
+            'city' => empty(sanitize_text_field($order->get_billing_city())) ? null : sanitize_text_field($order->get_billing_city()),
+            'postcode' => empty(sanitize_text_field($order->get_billing_postcode())) ? null : sanitize_text_field($order->get_billing_postcode()),
         ];
     }
 
@@ -26,12 +24,10 @@ trait Address
         $shipping_street = $order->get_shipping_address_1();
         $shipping_street .= " " . $order->get_shipping_address_2();
         return [
-            'country' => sanitize_text_field(
-                $this->convert_country_code($order->get_shipping_country())
-            ),
-            'street' => sanitize_text_field($shipping_street),
-            'city' => sanitize_text_field($order->get_shipping_city()),
-            'postcode' => sanitize_text_field($order->get_shipping_postcode()),
+            'country' => empty(sanitize_text_field($this->convert_country_code($order->get_shipping_country()))) ? null : sanitize_text_field($this->convert_country_code($order->get_shipping_country())),
+            'street' => empty(sanitize_text_field($shipping_street)) ? null : sanitize_text_field($shipping_street),
+            'city' => empty(sanitize_text_field($order->get_shipping_city())) ? null : sanitize_text_field($order->get_shipping_city()),
+            'postcode' => empty(sanitize_text_field($order->get_shipping_postcode())) ? null : sanitize_text_field($order->get_shipping_postcode()),
         ];
     }
 

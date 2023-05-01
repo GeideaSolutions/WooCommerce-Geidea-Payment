@@ -77,18 +77,18 @@ const getIframeConfiguration = (data) => {
         callbackUrl: data.callbackUrl,
         amount: parseFloat(data.amount),
         currency: data.currencyId,
-        cardOnFile: data.cardOnFile === 'yes',
+        cardOnFile: data.cardOnFile,
         merchantReferenceId: data.orderId.toString(),
         initiatedBy: "Internet",
         tokenId: data.tokenId,
         customer: {
-            create: data.createCustomer === 'yes',
-            setDefaultMethod: data.paymentMethod === 'yes',
+            create: data.createCustomer,
+            setDefaultMethod: data.paymentMethod,
             email: data.customerEmail,
             phoneNumber: data.customerPhoneNumber,
             address: {
                 billing: JSON.parse(data.billingAddress),
-                shipping: Object.values(JSON.parse(data.shippingAddress)).some(value => value == "") ? JSON.parse(data.billingAddress) : JSON.parse(data.shippingAddress),
+                shipping: JSON.parse(data.shippingAddress),
             },
         },
         appearance: {
