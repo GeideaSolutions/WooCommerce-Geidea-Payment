@@ -1,12 +1,12 @@
 === Geidea Online Payments for WooCommerce ===
 
 Contributors: geideapg123
-Version: 2.0.2
+Version: 2.0.3
 Tags: credit card, geidea, Apple Pay, payment, payment for WordPress, payment for woocommerce, payment request, woocommerce
 Requires at least: 6.0.2
 Tested up to: 6.2
 Requires PHP: 7.4
-Stable tag: 2.0.2
+Stable tag: 2.0.3
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -174,10 +174,9 @@ Before running any update make sure to back up your website!
 * Fix - Restructured code into multiple files based on capabilities
 * Fix - Fixed all sniffs highlighted by WordPress code sniffer
 
-= 2.0.1 - 2023-04-26 =
+= 2.0.1 - 2023-04-30 =
 * Refactor the codebase
 
-= 2.0.2 - 2023-04-26 =
-* Removed Create customer and Set default payment method options from Settings
-* Fix - Fixed saving card as tokens to WooCommerce
-* Enhancement - Renamed Hpp profile to Hosted Payment Page Styling
+= 2.0.3 - 2023-05-09 =
+* Security fixes
+* Admin settings Fixes

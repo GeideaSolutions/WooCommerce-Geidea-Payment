@@ -196,7 +196,7 @@ trait InitFormFields
                 'title' => geideaSettingsHppProfile,
                 'type' => 'select',
                 'options' => $hppprofile,
-                'default' => 'si',
+                'default' => 'simple',
                 'class' => 'geidea-extra-field',
                 'disabled' => $disable_extra_fields
             ),

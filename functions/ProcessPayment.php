@@ -51,70 +51,86 @@ trait ProcessPayment
             $token_id = null;
         }
 
-        //get information of order
         $order = wc_get_order($order_id);
         $order_currency = $order->get_currency();
         $available_currencies = $this->config['availableCurrencies'];
         $result_currency = in_array($order_currency, $available_currencies) ? $order_currency : $this->get_option('currency_id');
+        $billingAddress = $this->get_formatted_billing_address($order);
+        $shippingAddress = $this->get_formatted_shipping_address($order);
         global $wp_version;
-        $lang = $this->get_option('language');
-        $result_fields = [];
-        $result_fields['orderId'] = $order->get_id();
-        $result_fields['receiptEnabled'] = $this->get_option('receipt_enabled');
-        $result_fields['amount'] = number_format($order->get_total(), 2, '.', '');
-        $result_fields['tokenId'] = $token_id;
-        $result_fields['merchantGatewayKey'] = $this->get_option('merchant_gateway_key');
-        $result_fields['merchantPassword'] = $this->get_option('merchant_password');
-        $result_fields['currencyId'] = $result_currency;
-        $result_fields['successUrl'] = $this->get_return_url($order);
-        $result_fields['failUrl'] = $this->get_return_url($order);
-        $result_fields['headerColor'] = null;
-        if ($this->get_option('header_color')) {
-            $result_fields['headerColor'] = $this->get_option('header_color');
+        $encode_params = json_encode(array(
+            "merchantPublicKey" => $this->get_option('merchant_gateway_key'),
+            "apiPassword" => $this->get_option('merchant_password'),
+            "callbackUrl" => str_replace('http://', 'https://', get_site_url() . '/?wc-api=geidea'),
+            "amount" => number_format($order->get_total(), 2, '.', ''),
+            "currency" => $result_currency,
+            "cardOnFile" => $save_card,
+            "merchantReferenceId" => (string)$order->get_id(),
+            "initiatedBy" => "Internet",
+            "tokenId" => $token_id,
+            "language" => $this->get_option('language'),
+            "customer" => array(
+                "create" => false,
+                "setDefaultMethod" => false,
+                "email" => sanitize_text_field($order->get_billing_email()),
+                "phoneNumber" => $order->get_billing_phone()[0] != '+' ? '+' . $order->get_billing_phone() : $order->get_billing_phone(),
+                "address" => array(
+                    "billing" => array(
+                        "city" => $billingAddress['city'],
+                        "country" => $billingAddress['country'],
+                        "postcode" => $billingAddress['postcode'],
+                        "street" => $billingAddress['street'],
+                    ),
+                    "shipping" => array(
+                        "city" => $shippingAddress['city'],
+                        "country" => $shippingAddress['country'],
+                        "postcode" => $shippingAddress['postcode'],
+                        "street" => $shippingAddress['street'],
+                    )
+                )
+            ),
+            "appearance" => array(
+                "showAddress" => $token_id ? false : ($this->get_option('address_enabled') === 'yes'),
+                "showEmail" => $token_id ? false : ($this->get_option('email_enabled') === 'yes'),
+                "showPhone" => $token_id ? false : ($this->get_option('phonenumber_enabled') === 'yes'),
+                "receiptPage" => ($this->get_option('receipt_enabled') === 'yes') ? true : false,
+                "merchant" => array(
+                    "logoUrl" => (strlen($this->get_option('logo')) > 0) ? str_replace('http://', 'https://', $this->get_option('logo')) : null,
+                ),
+                "styles" => array(
+                    "headerColor" => $this->get_option('header_color') ? $this->get_option('header_color') : null,
+                    "hppProfile" => $this->get_option('hppprofile'),
+                    "hideGeideaLogo" => ($this->get_option('hide_GeideaLogo') === 'yes') ? true : false,
+                )
+            ),
+            "order" => array(
+                "integrationType" => 'plugin',
+            ),
+            "platform" => array(
+                "name" => "Wordpress",
+                "version" => $wp_version,
+                "pluginVersion" => GEIDEA_ONLINE_PAYMENTS_CURRENT_VERSION,
+                "partnerId" => (strlen($this->get_option('partner_id')) > 0) ? $this->get_option('partner_id') : null,
+            )
+        ));
+
+        $response = $this->send_gi_request(
+            $this->config['createSessionUrl'],
+            $this->get_option('merchant_gateway_key'),
+            $this->get_option('merchant_password'),
+            $encode_params
+        );
+
+        if (is_wp_error($response)) {
+            error_log(json_encode($response));
+        } else {
+            $body = json_decode(wp_remote_retrieve_body($response), true);
+            $body['successUrl'] = $this->get_return_url($order);
+            $response['body'] = json_encode($body);
         }
-        $result_fields['hideGeideaLogo'] = $this->get_option('hide_GeideaLogo');
-        $result_fields['cardOnFile'] = $save_card;
-        $result_fields['customerEmail'] = sanitize_text_field($order->get_billing_email());
-
-        $result_fields['customerPhoneNumber'] = $order->get_billing_phone();
-        if ($result_fields['customerPhoneNumber'][0] != '+') {
-            $result_fields['customerPhoneNumber'] = '+' . $result_fields['customerPhoneNumber'];
-        }
-
-        $result_fields['billingAddress'] = json_encode($this->get_formatted_billing_address($order));
-        $result_fields['shippingAddress'] = json_encode($this->get_formatted_shipping_address($order));
-
-        $callbackUrl = get_site_url() . '/?wc-api=geidea';
-        // Force https for Geidea Gateway
-        $result_fields['callbackUrl'] = str_replace('http://', 'https://', $callbackUrl);
-
-        $logoUrl = null;
-        $result_fields['merchantLogoUrl'] = $logoUrl;
-        if (strlen($this->get_option('logo')) > 0) {
-            $logoUrl = $this->get_option('logo');
-            $result_fields['merchantLogoUrl'] = str_replace('http://', 'https://', $logoUrl);
-        }
-
-        $result_fields['createCustomer'] = false;
-        $result_fields['paymentMethod'] = false;
-        $result_fields['language'] = $lang;
-        $result_fields['hppProfile'] = $this->get_option('hppprofile');
-        $result_fields['integrationType'] = 'plugin';
-        $result_fields['name'] = 'Wordpress';
-        $result_fields['version'] = $wp_version;
-        $result_fields['pluginVersion'] = GEIDEA_ONLINE_PAYMENTS_CURRENT_VERSION;
-        $result_fields['partnerId'] = null;
-        if (strlen($this->get_option('partner_id')) > 0) {
-            $result_fields['partnerId'] = $this->get_option('partner_id');
-        }
-        $result_fields['showEmail'] = $this->get_option('email_enabled');
-        $result_fields['showAddress'] = $this->get_option('address_enabled');
-        $result_fields['showPhone'] = $this->get_option('phonenumber_enabled');
-
-        $encode_params = json_encode($result_fields);
         $script = '
         <script>
-        startV2HPP(' . $encode_params . ');
+        startV2HPP(' . $response['body'] . ');
         </script>
         ';
         return array(
