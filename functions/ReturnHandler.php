@@ -70,9 +70,16 @@ trait ReturnHandler
                 $order_total = $value->meta_value;
             }
 
-            //checking on the order amount
+            // checking on the order amount
+            // FIX in case of BNPL amount will have added fee
+            $transactions = $order['transactions'];
+            foreach ($transactions as $transaction) {
+                if (isset($transaction['bnplDetails'])) {
+                    $amount = $transaction['bnplDetails']['totalAmount'];
+                }
+            }
             if (
-                number_format($order_total, 2, '.', '') != $order["amount"] &&
+                number_format($order_total, 2, '.', '') != $amount &&
                 (empty($wc_order->get_status()) || $wc_order->get_status() != 'failed')
             ) {
                 echo esc_html("Invalid order amount!");
