@@ -52,6 +52,20 @@ trait ProcessPayment
         }
 
         $order = wc_get_order($order_id);
+        $items = $order->get_items();
+        $orderItems = array();
+        foreach ($items as $item) {
+            $product = $item->get_product();
+            $tempItem = array(
+                "merchantItemId" => (string)$item->get_product_id(),
+                "name" => $item->get_name(),
+                "description" => $item->get_name(),
+                "categories" => "categories",
+                "count" => $item->get_quantity(),
+                "price" => number_format($product->get_price(), 2, '.', ''),
+            );
+            $orderItems[] = $tempItem;
+        }
         $order_currency = $order->get_currency();
         $available_currencies = $this->config['availableCurrencies'];
         $result_currency = in_array($order_currency, $available_currencies) ? $order_currency : $this->get_option('currency_id');
@@ -105,6 +119,7 @@ trait ProcessPayment
             ),
             "order" => array(
                 "integrationType" => 'plugin',
+                "items" => $orderItems
             ),
             "platform" => array(
                 "name" => "Wordpress",
