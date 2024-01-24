@@ -3,6 +3,7 @@
 namespace Geidea\Functions;
 
 use Geidea\Includes\GeideaTokensTable;
+use WP_Error;
 
 trait TokenisePayment
 {
@@ -116,13 +117,15 @@ trait TokenisePayment
 
     public static function tokens_table()
     {
-        $second_action = (wp_verify_nonce(sanitize_text_field(wp_unslash(isset($_POST['action2']))))) ? sanitize_key($_POST['action2']) : false;
-        if ($second_action == 'delete') {
-            foreach ($_POST as $k => $param) {
-                $san_param = sanitize_key($k);
-                if (str_starts_with($san_param, "delete_token")) {
-                    $token_id = str_replace("delete_token_", "", $san_param);
-                    WC_Gateway_Geidea::delete_token($token_id);
+        if (isset($_POST['geidea_tokens_nonce']) && wp_verify_nonce(sanitize_key($_POST['geidea_tokens_nonce']), 'geidea_tokens_nonce_field')) {
+            $second_action = isset($_POST['action2']) ? sanitize_key($_POST['action2']) : false;
+            if ($second_action == 'delete') {
+                foreach ($_POST as $k => $param) {
+                    $san_param = sanitize_key($k);
+                    if (str_starts_with($san_param, "delete_token")) {
+                        $token_id = str_replace("delete_token_", "", $san_param);
+                        \WC_Gateway_Geidea::delete_token($token_id);
+                    }
                 }
             }
         }
@@ -131,7 +134,7 @@ trait TokenisePayment
             $san_token = (wp_verify_nonce(sanitize_text_field(wp_unslash(isset($_GET['token']))))) ? sanitize_key($_GET['token']) : false;
             if ($san_token && is_numeric($san_token)) {
                 $token_id = (int) $san_token;
-                WC_Gateway_Geidea::delete_token($token_id);
+                \WC_Gateway_Geidea::delete_token($token_id);
             }
         }
 
@@ -140,12 +143,13 @@ trait TokenisePayment
             <h2><?php echo esc_html(geideaTokensTitle) ?></h2>
             <form method="post">
                 <?php \WC_Gateway_Geidea::geidea_render_tokens_table(); ?>
+                <?php wp_nonce_field('geidea_tokens_nonce_field', 'geidea_tokens_nonce'); ?>
             </form>
         </div>
 <?php
     }
 
-    private function delete_token($token_id)
+    public static function delete_token($token_id)
     {
         \WC_Payment_Tokens::delete((int) $token_id);
     }

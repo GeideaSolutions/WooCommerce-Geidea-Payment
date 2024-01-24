@@ -2,6 +2,8 @@
 
 namespace Geidea\Functions;
 
+use Exception;
+
 /**
  * ReturnHandler
  */

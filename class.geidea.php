@@ -7,7 +7,7 @@
  *
  * @class       WC_Geidea
  * @extends     WC_Payment_Gateway
- * @version     2.0.6
+ * @version     2.1.0
  * @author      Geidea
  */
 
@@ -54,6 +54,11 @@ class WC_Gateway_Geidea extends \WC_Payment_Gateway
     use TokenisePayment;
 
     public static ?WC_Gateway_Geidea $instance = null;
+
+    public $config;
+    public $logo;
+    public $tokenise_param;
+    public $token_id_param;
 
     public function __construct()
     {

@@ -23,7 +23,9 @@ trait InitFormFields
         );
         $options = get_option('woocommerce_' . $this->id . '_settings');
 
-        $logo = $options['logo'];
+        if (isset($options['logo'])) {
+            $logo = $options['logo'];
+        }
         if (isset($logo)) {
             $merchantLogo = sanitize_url($logo);
         }
@@ -32,26 +34,47 @@ trait InitFormFields
             $merchantLogoDescr .= '</br><img src="' . esc_html($merchantLogo) . '" width="70"></br>';
         }
 
-        $checkoutIcon = $options['checkout_icon'];
-        $checkoutIcon = sanitize_text_field($checkoutIcon);
+        if (isset($options['checkout_icon'])) {
+            $checkoutIcon = $options['checkout_icon'];
+        }
+        if (isset($checkoutIcon)) {
+            $checkoutIcon = sanitize_text_field($checkoutIcon);
+        }
         $checkoutIconDescr = geideaCheckoutIconDescription;
         if (empty($checkoutIcon)) {
             $checkoutIcon = plugins_url('../assets/imgs/geidea-logo.svg', __FILE__);
         }
         $checkoutIconDescr .= '</br><img src="' . esc_html($checkoutIcon) . '" width="70"></br>';
 
-        $available_currencies = explode(",", $options['available_currencies']);
+        if (isset($options['available_currencies'])) {
+            $available_currencies = explode(",", $options['available_currencies']);
+        }
         $currency_options = ['' => ''];
-        foreach ($available_currencies as $currency) {
-            $currency_options[$currency] = $this->config['currenciesMapping'][$currency];
+        if (isset($available_currencies)) {
+            foreach ($available_currencies as $currency) {
+                if (isset($this->config['currenciesMapping'][$currency])) {
+                    $currency_options[$currency] = $this->config['currenciesMapping'][$currency];
+                }
+            }
         }
 
         $availablePaymentMethods = [];
-        foreach (explode(",", $options['avaliable_payment_methods']) as $paymentMethod) {
-            $availablePaymentMethods[] = $this->config['paymentMethodsMapping'][$paymentMethod];
+        if (isset($options['avaliable_payment_methods'])) {
+            foreach (explode(",", $options['avaliable_payment_methods']) as $paymentMethod) {
+                if (isset($this->config['paymentMethodsMapping'][$paymentMethod])) {
+                    $availablePaymentMethods[] = $this->config['paymentMethodsMapping'][$paymentMethod];
+                }
+            }
         }
 
-        $disable_extra_fields = !$options['valid_creds'];
+        $disable_extra_fields = true;
+        if (isset($options['valid_creds'])) {
+            if ($options['valid_creds']) {
+                $disable_extra_fields = false;
+            } else {
+                $disable_extra_fields = true;
+            }
+        }
 
         if ($availablePaymentMethods) {
             $default_title = implode(", ", $availablePaymentMethods);
@@ -218,12 +241,12 @@ trait InitFormFields
             ),
             'needs_setup' => array(
                 'type' => 'hidden',
-                'default' => 'true',
+                'default' => true,
                 'class' => 'geidea-extra-field-hidden',
             ),
             'valid_creds' => array(
                 'type' => 'hidden',
-                'default' => 'false',
+                'default' => false,
                 'class' => 'geidea-extra-field-hidden',
             ),
             'available_currencies' => array(
@@ -235,6 +258,10 @@ trait InitFormFields
                 'type' => 'hidden',
                 'default' => '',
                 'class' => 'geidea-extra-field-hidden',
+            ),
+            'nonce_field' => array(
+                'type' => 'hidden',
+                'default' => wp_create_nonce('woocommerce_geidea_nonce'),
             ),
         );
     }

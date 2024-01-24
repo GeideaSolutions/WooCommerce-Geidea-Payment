@@ -2,6 +2,8 @@
 
 namespace Geidea\Functions;
 
+use Exception;
+use WC_Gateway_Geidea;
 use WC_Payment_Tokens;
 
 /**

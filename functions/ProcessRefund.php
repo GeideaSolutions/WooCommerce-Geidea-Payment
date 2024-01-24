@@ -2,6 +2,8 @@
 
 namespace Geidea\Functions;
 
+use WP_Error;
+
 trait ProcessRefund
 {
     /**

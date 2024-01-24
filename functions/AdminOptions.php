@@ -2,6 +2,10 @@
 
 namespace Geidea\Functions;
 
+use Exception;
+use WC_Admin_Settings;
+use WP_Error;
+
 /**
  * Admin options
  */
@@ -70,7 +74,9 @@ trait AdminOptions
                 $form_fields['currency_id']['options'] = $currency_options;
                 $availablePaymentMethods = [];
                 foreach ($merchant_config['paymentMethods'] as $paymentMethod) {
-                    $availablePaymentMethods[] = $this->config['paymentMethodsMapping'][$paymentMethod];
+                    if (isset($this->config['paymentMethodsMapping'][$paymentMethod])) {
+                        $availablePaymentMethods[] = $this->config['paymentMethodsMapping'][$paymentMethod];
+                    }
                 }
                 if ($merchant_config['applePay']['isApplePayWebEnabled']) {
                     $availablePaymentMethods[] = $this->config['paymentMethodsMapping']['applepay'];
@@ -139,6 +145,9 @@ trait AdminOptions
 
     public function process_admin_options(): bool
     {
+        if (!isset($_POST['woocommerce_geidea_nonce_field']) || !wp_verify_nonce(sanitize_key($_POST['woocommerce_geidea_nonce_field']), 'woocommerce_geidea_nonce')) {
+            wp_die("Error: Nonce Verification Failed !");
+        }
         function generate_logo_filename($dir, $name, $ext): string
         {
             return "logo_" . bin2hex(random_bytes(16)) . $ext;
@@ -154,13 +163,45 @@ trait AdminOptions
                 }
             }
         }
-        if (isset($_FILES['woocommerce_geidea_logo']) && ($_FILES['woocommerce_geidea_logo']['size'] > 0)) {
-            $upload_errors = $this->upload_logo($_FILES['woocommerce_geidea_logo'], 'logo');
-            $this->errors = array_merge($this->errors, $upload_errors);
+        if (isset($_FILES['woocommerce_geidea_logo']) && isset($_FILES['woocommerce_geidea_logo']['size']) && ($_FILES['woocommerce_geidea_logo']['size'] > 0) && isset($_FILES['woocommerce_geidea_logo']['name'])) {
+            $errors1 = [];
+            $arr_file_type1 = wp_check_filetype(basename(sanitize_file_name($_FILES['woocommerce_geidea_logo']['name'])));
+            $uploaded_file_type1 = $arr_file_type1['type'];
+            $allowed_file_types1 = array('image/jpg', 'image/jpeg', 'image/png', 'image/svg+xml');
+            if (in_array($uploaded_file_type1, $allowed_file_types1)) {
+                if (!function_exists('wp_handle_upload')) {
+                    require_once ABSPATH . 'wp-admin/includes/file.php';
+                }
+                $uploaded_file1 = wp_handle_upload($_FILES['woocommerce_geidea_logo'], array('test_form' => false, 'unique_filename_callback' => 'generate_logo_filename'));
+                if (isset($uploaded_file1['file'])) {
+                    $this->settings['logo'] = $uploaded_file1['url'];
+                } else {
+                    $errors1[] = geideaFileUploadingError;
+                }
+            } else {
+                $errors1[] = geideaWrongFileType;
+            }
+            $this->errors = array_merge($this->errors, $errors1);
         }
-        if (isset($_FILES['woocommerce_geidea_checkout_icon']) && ($_FILES['woocommerce_geidea_checkout_icon']['size'] > 0)) {
-            $upload_errors = $this->upload_logo($_FILES['woocommerce_geidea_checkout_icon'], 'checkout_icon');
-            $this->errors = array_merge($this->errors, $upload_errors);
+        if (isset($_FILES['woocommerce_geidea_checkout_icon']) && isset($_FILES['woocommerce_geidea_checkout_icon']['size']) && ($_FILES['woocommerce_geidea_checkout_icon']['size'] > 0) && isset($_FILES['woocommerce_geidea_checkout_icon']['name'])) {
+            $errors2 = [];
+            $arr_file_type2 = wp_check_filetype(basename(sanitize_file_name($_FILES['woocommerce_geidea_checkout_icon']['name'])));
+            $uploaded_file_type2 = $arr_file_type2['type'];
+            $allowed_file_types2 = array('image/jpg', 'image/jpeg', 'image/png', 'image/svg+xml');
+            if (in_array($uploaded_file_type2, $allowed_file_types2)) {
+                if (!function_exists('wp_handle_upload')) {
+                    require_once ABSPATH . 'wp-admin/includes/file.php';
+                }
+                $uploaded_file2 = wp_handle_upload($_FILES['woocommerce_geidea_checkout_icon'], array('test_form' => false, 'unique_filename_callback' => 'generate_logo_filename'));
+                if (isset($uploaded_file2['file'])) {
+                    $this->settings['checkout_icon'] = $uploaded_file2['url'];
+                } else {
+                    $errors2[] = geideaFileUploadingError;
+                }
+            } else {
+                $errors2[] = geideaWrongFileType;
+            }
+            $this->errors = array_merge($this->errors, $errors2);
         }
         if (!empty($this->errors)) {
             $this->enabled = false;
@@ -171,6 +212,9 @@ trait AdminOptions
         }
         $this->settings['return_url'] = 'yes';
         $are_valid_credentials = false;
+        if (!empty($this->settings['merchant_gateway_key'])) {
+            $this->settings['merchant_gateway_key'] = str_replace(' ', '', $this->settings['merchant_gateway_key']);
+        }
         if (!empty($this->settings['merchant_gateway_key'])) {
             $result = $this->get_merchant_config($this->settings['merchant_gateway_key'], $this->settings['merchant_password']);
             if (!$result['errors']) {
@@ -197,8 +241,11 @@ trait AdminOptions
         } else {
             $this->settings['valid_creds'] = true;
         }
-        if ($this->settings['needs_setup'] == 'true') {
-            $this->settings['needs_setup'] = 'false';
+        if ($this->settings['needs_setup'] == true) {
+            $this->settings['needs_setup'] = false;
+        }
+        if (isset($this->settings['nonce_field'])) {
+            unset($this->settings['nonce_field']);
         }
         return update_option($this->get_option_key(), apply_filters('woocommerce_settings_api_sanitized_fields_' . $this->id, $this->settings), 'yes');
     }
