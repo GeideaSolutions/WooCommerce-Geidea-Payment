@@ -73,6 +73,8 @@ trait ProcessPayment
         $result_currency = in_array($order_currency, $available_currencies) ? $order_currency : $this->get_option('currency_id');
         $billingAddress = $this->get_formatted_billing_address($order);
         $shippingAddress = $this->get_formatted_shipping_address($order);
+        $timestamp =  date("n/d/Y g:i:s A");
+        $signature = $this->generateSignature($this->get_option('merchant_gateway_key'), $order->get_total(), $result_currency,  (string)$order->get_id(), $this->get_option('merchant_password'), $timestamp);
         global $wp_version;
         $encode_params = json_encode(array(
             "merchantPublicKey" => $this->get_option('merchant_gateway_key'),
@@ -85,6 +87,9 @@ trait ProcessPayment
             "initiatedBy" => "Internet",
             "tokenId" => $token_id,
             "language" => $this->get_option('language'),
+            "timestamp" => $timestamp,
+            "paymentIntentId" => null,
+            "paymentOperation" => "Pay",
             "customer" => array(
                 "create" => false,
                 "setDefaultMethod" => false,
@@ -117,7 +122,8 @@ trait ProcessPayment
                     "headerColor" => $this->get_option('header_color') ? $this->get_option('header_color') : null,
                     "hppProfile" => $this->get_option('hppprofile'),
                     "hideGeideaLogo" => ($this->get_option('hide_GeideaLogo') === 'yes') ? true : false,
-                )
+                ),
+                "uiMode" => "modal"
             ),
             "order" => array(
                 "integrationType" => 'plugin',
@@ -128,7 +134,8 @@ trait ProcessPayment
                 "version" => $wp_version,
                 "pluginVersion" => GEIDEA_ONLINE_PAYMENTS_CURRENT_VERSION,
                 "partnerId" => (strlen($this->get_option('partner_id')) > 0) ? $this->get_option('partner_id') : null,
-            )
+            ),
+            "signature" => $signature
         ));
 
         $response = $this->send_gi_request(
@@ -156,6 +163,14 @@ trait ProcessPayment
             'refresh' => true,
             'reload' => false,
         );
+    }
+
+    private function generateSignature($merchantPublicKey, $orderAmount, $orderCurrency, $orderMerchantReferenceId, $apiPassword, $timestamp)
+    {
+        $amountStr = number_format($orderAmount, 2, '.', '');
+        $data = "{$merchantPublicKey}{$amountStr}{$orderCurrency}{$orderMerchantReferenceId}{$timestamp}";
+        $hash = hash_hmac('sha256', $data, $apiPassword, true);
+        return base64_encode($hash);
     }
 
     public function init_payment()
