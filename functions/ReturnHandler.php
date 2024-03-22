@@ -62,34 +62,6 @@ trait ReturnHandler
                 die();
             }
 
-            //get the order amount
-            global $wpdb;
-            $order_total = 0;
-            $orders_fields = $wpdb->get_results($wpdb->prepare("SELECT * FROM $wpdb->postmeta WHERE post_id = %d", $wc_order->id));
-            foreach ($orders_fields as $value) {
-                if ($value->meta_key != '_order_total') {
-                    continue;
-                }
-                $order_total = $value->meta_value;
-            }
-
-            // checking on the order amount
-            // FIX in case of BNPL amount will have added fee
-            $transactions = $order['transactions'];
-            foreach ($transactions as $transaction) {
-                if (isset($transaction['bnplDetails'])) {
-                    $amount = $transaction['bnplDetails']['totalAmount'];
-                }
-            }
-            if (
-                number_format($order_total, 2, '.', '') != $amount &&
-                (empty($wc_order->get_status()) || $wc_order->get_status() != 'failed')
-            ) {
-                echo esc_html("Invalid order amount!");
-                http_response_code(400);
-                die();
-            }
-
             $options = $this->get_options();
             if (
                 mb_strtolower($order["status"]) == "success" &&
