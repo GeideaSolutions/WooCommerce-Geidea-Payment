@@ -48,3 +48,4 @@ const geideaTokensTitle = 'رموز البطاقات';
 const geideaTokensToken = 'رمز';
 const geideaTokensUsername = 'اسم المستخدم';
 const geideaWrongFileType = 'نوع الملف خاطئ';
+const geideaEnvironment = 'بيئة';

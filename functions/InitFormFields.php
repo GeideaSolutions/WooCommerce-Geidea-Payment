@@ -13,6 +13,11 @@ trait InitFormFields
         wp_enqueue_style('geidea');
 
         $statuses = wc_get_order_statuses();
+        $geidea_environment = array(
+            "EGY-PROD" => "EGY-PROD",
+            "KSA-PROD" => "KSA-PROD",
+            "UAE-PROD" => "UAE-PROD"
+        );
         $languages = array(
             "ar" => "Arabic",
             "en" => "English",
@@ -88,6 +93,13 @@ trait InitFormFields
                 'type' => 'checkbox',
                 'label' => ' ',
                 'default' => 'no',
+            ),
+            'geidea_environment' => array(
+                'title' => geideaEnvironment . ' *',
+                'type' => 'select',
+                'options' => $geidea_environment,
+                'default' => 'EGY-PROD',
+                'class' => 'geidea-extra-field',
             ),
             'merchant_gateway_key' => array(
                 'title' => geideaSettingsMerchant . ' *',

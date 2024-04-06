@@ -48,3 +48,4 @@ const geideaTokensTitle = 'Card Tokens';
 const geideaTokensToken = 'Token';
 const geideaTokensUsername = 'Username';
 const geideaWrongFileType = 'Wrong file type';
+const geideaEnvironment = 'Environment';
