@@ -4,7 +4,7 @@ Contributors: geideapg123
 Version: 3.1.0
 Tags: credit card, geidea, Apple Pay, payment, payment for WordPress, payment for woocommerce, payment request, woocommerce
 Requires at least: 6.0.2
-Tested up to: 6.4.2
+Tested up to: 6.5
 Requires PHP: 7.4
 Stable tag: 3.1.0
 License: GPLv3
