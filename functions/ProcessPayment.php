@@ -39,14 +39,14 @@ trait ProcessPayment
         }
         $token_id = null;
         try {
-            if (isset($_POST['wc-geidea-payment-token']) && isset($_POST['woocommerce-process-checkout-nonce']) && wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['woocommerce-process-checkout-nonce'])), 'woocommerce-process_checkout')) {
-                $selected_token_id = sanitize_text_field(wp_unslash($_POST['wc-geidea-payment-token']));
+            if (isset($_POST['wc-geidea-payment-token'])) { // phpcs:ignore
+                $selected_token_id = sanitize_text_field(wp_unslash($_POST['wc-geidea-payment-token'])); // phpcs:ignore
                 $token = WC_Payment_Tokens::get($selected_token_id);
                 if ($token) {
                     $token_id = $token->get_token();
                 }
             }
-            if (isset($_POST['wc-geidea-new-payment-method']) && isset($_POST['woocommerce-process-checkout-nonce']) && wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['woocommerce-process-checkout-nonce'])), 'woocommerce-process_checkout')) {
+            if (isset($_POST['wc-geidea-new-payment-method']) && sanitize_text_field(wp_unslash($_POST['wc-geidea-new-payment-method']))) { // phpcs:ignore
                 $save_card = true;
             }
         } catch (Exception $e) {
@@ -157,11 +157,10 @@ trait ProcessPayment
         startV2HPP(' . $response['body'] . ');
         </script>
         ';
+        $geidea_session_nonce = wp_create_nonce('geidea_session_action');
         return array(
             'result' => 'success',
-            'messages' => $script,
-            'refresh' => true,
-            'reload' => false,
+            'redirect' => wc_get_checkout_url() . '?geidea-session=' . urlencode(json_encode($response['body'])) . "&geidea_session_nonce=$geidea_session_nonce"
         );
     }
 

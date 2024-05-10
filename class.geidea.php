@@ -7,7 +7,7 @@
  *
  * @class       WC_Geidea
  * @extends     WC_Payment_Gateway
- * @version     3.1.1
+ * @version     3.2.0
  * @author      Geidea
  */
 
@@ -109,6 +109,7 @@ class WC_Gateway_Geidea extends \WC_Payment_Gateway
         }
         add_action('wp_ajax_ajax_order', array('WC_Gateway_Geidea', 'init_payment'));
         add_action('wp_ajax_nopriv_ajax_order', array('WC_Gateway_Geidea', 'init_payment'));
+        add_action('wp_enqueue_scripts', array($this, 'payment_scripts'));
     }
 
     public function add_scroll_script()
@@ -169,5 +170,102 @@ class WC_Gateway_Geidea extends \WC_Payment_Gateway
         $settings['returnUrl'] = get_site_url() . '/?wc-api=geidea';
 
         return $settings;
+    }
+
+    public function payment_scripts()
+    {
+        if (!isset($_GET['geidea-session'])) {
+            return;
+        }
+        if ($this->enabled === 'no') {
+            return;
+        }
+        if (!isset($_GET['geidea_session_nonce']) || !wp_verify_nonce(sanitize_key(wp_unslash($_GET['geidea_session_nonce'])), 'geidea_session_action')) {
+            echo '<script>alert("Nonce Verification Failed")</script>';
+            echo '<script>setTimeout(document.location.href = "' . wc_get_checkout_url() . '", 1000)</script>';
+            return;
+        }
+
+        $data_string = urldecode(wp_unslash($_GET['geidea-session'])); // phpcs:ignore
+        $data_array = json_decode($data_string, true);
+
+?>
+        <div style="display: none;">
+            <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+            <script src='<?php echo $this->config['jsSdkUrl']; ?>'></script>
+            <script>
+                let y_offsetWhenScrollDisabled = 0;
+
+                function disableScrollOnBody() {
+                    y_offsetWhenScrollDisabled = jQuery(window).scrollTop();
+                    jQuery('body').addClass('scrollDisabled').css('margin-top', -y_offsetWhenScrollDisabled);
+                }
+
+                function enableScrollOnBody() {
+                    jQuery('body').removeClass('scrollDisabled').css('margin-top', 0);
+                    jQuery(window).scrollTop(y_offsetWhenScrollDisabled);
+                }
+
+                let onError = function(error) {
+                    enableScrollOnBody();
+                    jQuery("#place_order").removeAttr("disabled");
+                    alert("Geidea Payment Gateway error: " + error.responseMessage);
+                    setTimeout(document.location.href = '<?php echo wc_get_checkout_url(); ?>', 1000);
+                }
+
+                let onCancel = function() {
+                    enableScrollOnBody();
+                    jQuery("#place_order").removeAttr("disabled");
+                    setTimeout(document.location.href = '<?php echo wc_get_checkout_url(); ?>', 1000);
+                }
+
+                const startV2HPP = (data) => {
+                    console.log("Session create API response", data);
+                    disableScrollOnBody();
+                    let onSuccess = function(_message, _statusCode) {
+                        setTimeout(document.location.href = data.successUrl, 1000);
+                    }
+                    try {
+                        if (data.responseCode !== '000') {
+                            throw data
+                        }
+                        const api = new GeideaCheckout(onSuccess, onError, onCancel);
+                        api.startPayment(data.session.id);
+                    } catch (error) {
+                        let receivedError;
+                        const errorFields = [];
+
+                        if (error.status && error.errors) {
+                            const errorsObject = error.errors;
+
+                            for (const key of Object.keys(errorsObject)) {
+                                errorFields.push(key.replace('$.', ''))
+                            }
+                            receivedError = {
+                                responseCode: '100',
+                                responseMessage: 'Field formatting errors',
+                                detailResponseMessage: `Fields with errors: ${errorFields.toString()}`,
+                                reference: error.reference,
+                                detailResponseCode: null,
+                                orderId: null
+                            }
+                        } else {
+                            receivedError = {
+                                responseCode: error.responseCode,
+                                responseMessage: error.responseMessage,
+                                detailResponseMessage: error.detailedResponseMessage,
+                                detailResponseCode: error.detailedResponseCode,
+                                orderId: null,
+                                reference: error.reference,
+                            }
+                        }
+                        onError(receivedError);
+                    }
+                }
+
+                startV2HPP(JSON.parse('<?php echo $data_array; ?>'));
+            </script>
+        </div>
+<?php
     }
 }

@@ -3,7 +3,7 @@
 /*
 Plugin Name: Geidea Online Payments
 Description: Geidea Online Payments.
-Version: 3.1.1
+Version: 3.2.0
 Author: Geidea
 Author URI: https://geidea.net
 
@@ -52,6 +52,37 @@ function geidea_add_card_tokens_menu(): void
     \WC_Gateway_Geidea::add_card_tokens_menu();
 }
 
+/**
+ * Function for declare compatibility with cart_checkout_blocks feature
+ */
+function declare_cart_checkout_blocks_compatibility()
+{
+    if (class_exists('\Automattic\WooCommerce\Utilities\FeaturesUtil')) {
+        \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility(
+            'cart_checkout_blocks',
+            __FILE__,
+            true
+        );
+    }
+}
+
+/**
+ * Function for register a payment method type
+ */
+function register_order_approval_payment_method_type()
+{
+    if (!class_exists('Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType')) {
+        return;
+    }
+    require_once('class.blocks-checkout.php');
+    add_action(
+        'woocommerce_blocks_payment_method_type_registration',
+        function (Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry $payment_method_registry) {
+            $payment_method_registry->register(new WC_geidea_Blocks);
+        }
+    );
+}
+
 /*
  * Function for load plugin
  */
@@ -74,4 +105,6 @@ function woocommerce_geidea(): void
     }
     add_filter('woocommerce_payment_gateways', 'geidea_add_gateway');
     add_action('admin_menu', 'geidea_add_card_tokens_menu', 99);
+    add_action('before_woocommerce_init', 'declare_cart_checkout_blocks_compatibility');
+    add_action('woocommerce_blocks_loaded', 'register_order_approval_payment_method_type');
 }
