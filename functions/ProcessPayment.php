@@ -160,7 +160,7 @@ trait ProcessPayment
         $geidea_session_nonce = wp_create_nonce('geidea_session_action');
         return array(
             'result' => 'success',
-            'redirect' => wc_get_checkout_url() . '?geidea-session=' . urlencode(json_encode($response['body'])) . "&geidea_session_nonce=$geidea_session_nonce"
+            'redirect' => wc_get_cart_url() . '?geidea-session=' . urlencode(json_encode($response['body'])) . "&geidea_session_nonce=$geidea_session_nonce"
         );
     }
 
