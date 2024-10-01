@@ -54,20 +54,21 @@ trait ProcessPayment
         }
 
         $order = wc_get_order($order_id);
-        // $items = $order->get_items();
-        // $orderItems = array();
-        // foreach ($items as $item) {
-        //     $product = $item->get_product();
-        //     $tempItem = array(
-        //         "merchantItemId" => (string)$item->get_product_id(),
-        //         "name" => $item->get_name(),
-        //         "description" => $item->get_name(),
-        //         "categories" => "categories",
-        //         "count" => $item->get_quantity(),
-        //         "price" => number_format($product->get_price(), 2, '.', ''),
-        //     );
-        //     $orderItems[] = $tempItem;
-        // }
+        $items = $order->get_items();
+        $orderItems = array();
+        foreach ($items as $item_id => $item) {
+            $product = $item->get_product();
+            $tempItem = array(
+                "merchantItemId" => (string)$item_id,
+                "name" => $item->get_name(),
+                "description" =>  $item->get_name(),
+                "categories" => "categories",
+                "count" => $item->get_quantity(),
+                "price" => number_format($product->get_price(), 2, '.', ''),
+                "sku" => $product->get_sku() ? (string)$product->get_sku() : (string)$item_id,
+            );
+            $orderItems[] = $tempItem;
+        }
         $order_currency = $order->get_currency();
         $available_currencies = $this->config['availableCurrencies'];
         $result_currency = in_array($order_currency, $available_currencies) ? $order_currency : $this->get_option('currency_id');
@@ -95,17 +96,19 @@ trait ProcessPayment
                 "setDefaultMethod" => false,
                 "email" => sanitize_text_field($order->get_billing_email()),
                 "phoneNumber" => $order->get_billing_phone()[0] != '+' ? '+' . $order->get_billing_phone() : $order->get_billing_phone(),
+                "firstName" =>  $order->get_billing_first_name(),
+                "lastName" => $order->get_billing_last_name(),
                 "address" => array(
                     "billing" => array(
                         "city" => $billingAddress['city'],
                         "country" => $billingAddress['country'],
-                        "postcode" => $billingAddress['postcode'],
+                        "postalCode" => $billingAddress['postcode'],
                         "street" => $billingAddress['street'],
                     ),
                     "shipping" => array(
                         "city" => $shippingAddress['city'],
                         "country" => $shippingAddress['country'],
-                        "postcode" => $shippingAddress['postcode'],
+                        "postalCode" => $shippingAddress['postcode'],
                         "street" => $shippingAddress['street'],
                     )
                 )
@@ -127,7 +130,7 @@ trait ProcessPayment
             ),
             "order" => array(
                 "integrationType" => 'plugin',
-                // "items" => $orderItems
+                "items" => $orderItems
             ),
             "platform" => array(
                 "name" => "Wordpress",
@@ -154,7 +157,7 @@ trait ProcessPayment
         }
         $script = '
         <script>
-        startV2HPP(' . $response['body'] . ');
+        geidea_startV2HPP(' . $response['body'] . ');
         </script>
         ';
         $geidea_session_nonce = wp_create_nonce('geidea_session_action');

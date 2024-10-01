@@ -7,7 +7,7 @@
  *
  * @class       WC_Geidea
  * @extends     WC_Payment_Gateway
- * @version     3.4.1
+ * @version     3.5.0
  * @author      Geidea
  */
 
@@ -186,42 +186,42 @@ class WC_Gateway_Geidea extends \WC_Payment_Gateway
             return;
         }
 
-        $data_string = urldecode(wp_unslash($_GET['geidea-session'])); // phpcs:ignore
-        $data_array = json_decode($data_string, true);
+        $geidea_data_string = urldecode(wp_unslash($_GET['geidea-session'])); // phpcs:ignore
+        $geidea_data_array = json_decode($geidea_data_string, true);
 
 ?>
         <div style="display: none;">
             <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
             <script src='<?php echo $this->config['jsSdkUrl']; ?>'></script>
             <script>
-                let y_offsetWhenScrollDisabled = 0;
+                let geidea_y_offsetWhenScrollDisabled = 0;
 
-                function disableScrollOnBody() {
-                    y_offsetWhenScrollDisabled = jQuery(window).scrollTop();
-                    jQuery('body').addClass('scrollDisabled').css('margin-top', -y_offsetWhenScrollDisabled);
+                function geidea_disableScrollOnBody() {
+                    geidea_y_offsetWhenScrollDisabled = jQuery(window).scrollTop();
+                    jQuery('body').addClass('scrollDisabled').css('margin-top', -geidea_y_offsetWhenScrollDisabled);
                 }
 
-                function enableScrollOnBody() {
+                function geidea_enableScrollOnBody() {
                     jQuery('body').removeClass('scrollDisabled').css('margin-top', 0);
-                    jQuery(window).scrollTop(y_offsetWhenScrollDisabled);
+                    jQuery(window).scrollTop(geidea_y_offsetWhenScrollDisabled);
                 }
 
-                let onError = function(error) {
-                    enableScrollOnBody();
+                let geidea_onError = function(error) {
+                    geidea_enableScrollOnBody();
                     jQuery("#place_order").removeAttr("disabled");
                     alert("Geidea Payment Gateway error: " + error.responseMessage);
                     setTimeout(document.location.href = '<?php echo wc_get_checkout_url(); ?>', 1000);
                 }
 
-                let onCancel = function() {
-                    enableScrollOnBody();
+                let geidea_onCancel = function() {
+                    geidea_enableScrollOnBody();
                     jQuery("#place_order").removeAttr("disabled");
                     setTimeout(document.location.href = '<?php echo wc_get_checkout_url(); ?>', 1000);
                 }
 
-                const startV2HPP = (data) => {
+                const geidea_startV2HPP = (data) => {
                     console.log("Session create API response", data);
-                    disableScrollOnBody();
+                    geidea_disableScrollOnBody();
                     let onSuccess = function(_message, _statusCode) {
                         setTimeout(document.location.href = data.successUrl, 1000);
                     }
@@ -229,7 +229,7 @@ class WC_Gateway_Geidea extends \WC_Payment_Gateway
                         if (data.responseCode !== '000') {
                             throw data
                         }
-                        const api = new GeideaCheckout(onSuccess, onError, onCancel);
+                        const api = new GeideaCheckout(onSuccess, geidea_onError, geidea_onCancel);
                         api.startPayment(data.session.id);
                     } catch (error) {
                         let receivedError;
@@ -259,11 +259,11 @@ class WC_Gateway_Geidea extends \WC_Payment_Gateway
                                 reference: error.reference,
                             }
                         }
-                        onError(receivedError);
+                        geidea_onError(receivedError);
                     }
                 }
 
-                startV2HPP(JSON.parse('<?php echo $data_array; ?>'));
+                geidea_startV2HPP(JSON.parse('<?php echo $geidea_data_array; ?>'));
             </script>
         </div>
 <?php

@@ -1,28 +1,28 @@
-let y_offsetWhenScrollDisabled = 0;
-function disableScrollOnBody() {
-    y_offsetWhenScrollDisabled = jQuery(window).scrollTop();
-    jQuery('body').addClass('scrollDisabled').css('margin-top', -y_offsetWhenScrollDisabled);
+let geidea_y_offsetWhenScrollDisabled = 0;
+function geidea_disableScrollOnBody() {
+    geidea_y_offsetWhenScrollDisabled = jQuery(window).scrollTop();
+    jQuery('body').addClass('scrollDisabled').css('margin-top', -geidea_y_offsetWhenScrollDisabled);
 }
 
-function enableScrollOnBody() {
+function geidea_enableScrollOnBody() {
     jQuery('body').removeClass('scrollDisabled').css('margin-top', 0);
-    jQuery(window).scrollTop(y_offsetWhenScrollDisabled);
+    jQuery(window).scrollTop(geidea_y_offsetWhenScrollDisabled);
 }
 
-let onError = function (error) {
-    enableScrollOnBody();
+let geidea_onError = function (error) {
+    geidea_enableScrollOnBody();
     jQuery("#place_order").removeAttr("disabled");
     alert("Geidea Payment Gateway error: " + error.responseMessage);
 }
 
-let onCancel = function () {
-    enableScrollOnBody();
+let geidea_onCancel = function () {
+    geidea_enableScrollOnBody();
     jQuery("#place_order").removeAttr("disabled");
 }
 
-const startV2HPP = (data) => {
+const geidea_startV2HPP = (data) => {
     console.log("Session create API response", data);
-    disableScrollOnBody();
+    geidea_disableScrollOnBody();
     let onSuccess = function (_message, _statusCode) {
         setTimeout(document.location.href = data.successUrl, 1000);
     }
@@ -30,7 +30,7 @@ const startV2HPP = (data) => {
         if (data.responseCode !== '000') {
             throw data
         }
-        const api = new GeideaCheckout(onSuccess, onError, onCancel);
+        const api = new GeideaCheckout(onSuccess, geidea_onError, geidea_onCancel);
         api.startPayment(data.session.id);
     } catch (error) {
         let receivedError;
@@ -60,6 +60,6 @@ const startV2HPP = (data) => {
                 reference: error.reference,
             }
         }
-        onError(receivedError);
+        geidea_onError(receivedError);
     }
 }
