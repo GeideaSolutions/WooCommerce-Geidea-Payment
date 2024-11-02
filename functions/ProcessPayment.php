@@ -81,6 +81,7 @@ trait ProcessPayment
             "merchantPublicKey" => $this->get_option('merchant_gateway_key'),
             "apiPassword" => $this->get_option('merchant_password'),
             "callbackUrl" => str_replace('http://', 'https://', get_site_url() . '/?wc-api=geidea'),
+            "returnUrl" => wc_get_checkout_url(),
             "amount" => number_format($order->get_total(), 2, '.', ''),
             "currency" => $result_currency,
             "cardOnFile" => $save_card,

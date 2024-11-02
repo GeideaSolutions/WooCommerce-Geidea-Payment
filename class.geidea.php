@@ -7,7 +7,7 @@
  *
  * @class       WC_Geidea
  * @extends     WC_Payment_Gateway
- * @version     3.5.0
+ * @version     3.5.2
  * @author      Geidea
  */
 
